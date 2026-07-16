@@ -246,6 +246,12 @@
     .cal-day-panel-title{font-size:14px;font-weight:700;margin-bottom:12px;}
   }
 
+  .project-member-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;margin-bottom:8px;}
+  .project-member-tags:empty::before{content:"（未選択）";color:var(--muted);font-size:13px;line-height:28px;}
+  .member-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:99px;font-size:13px;}
+  .member-tag .tag-remove{background:none;border:none;cursor:pointer;color:#9ca3af;padding:0;font-size:15px;line-height:1;display:flex;align-items:center;}
+  .member-tag .tag-remove:hover{color:#dc2626;}
+  .member-add-select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:var(--card);}
   .member-avatar{
     width:34px;height:34px;border-radius:50%;
     background:var(--primary);color:#fff;
@@ -812,7 +818,13 @@
     </div>
     <div class="form-row"><label>開始日</label><input type="date" id="projectStart"></div>
     <div class="form-row"><label>締切日</label><input type="date" id="projectEnd"></div>
-    <div class="form-row"><label>参加メンバー</label><select id="projectMembers" multiple size="4"></select></div>
+    <div class="form-row">
+      <label>参加メンバー</label>
+      <div class="project-member-tags" id="projectMemberTags"></div>
+      <select class="member-add-select" id="projectMemberAdd" onchange="addProjectMember(this.value)">
+        <option value="">＋ メンバーを追加...</option>
+      </select>
+    </div>
     <div class="modal-actions">
       <button class="btn danger" id="projectDeleteBtn" onclick="deleteProject()" style="display:none;">削除</button>
       <button class="btn secondary" onclick="closeModal('projectModalOverlay')">キャンセル</button>
@@ -1506,9 +1518,35 @@ function renderProjects(){
     }).join("") + `</div>`;
 }
 
+let _projectMemberIds = []; // モーダル内で選択中のメンバーID
+
+function _renderProjectMemberTags(){
+  const tags = document.getElementById("projectMemberTags");
+  const addSel = document.getElementById("projectMemberAdd");
+  if(!tags || !addSel) return;
+  tags.innerHTML = _projectMemberIds.map(id=>{
+    const m = state.members.find(x=>x.id===id);
+    if(!m) return "";
+    return `<span class="member-tag">${escapeHtml(m.name)}<button class="tag-remove" onclick="removeProjectMember('${id}')" title="削除">×</button></span>`;
+  }).join("");
+  // 未選択メンバーのみドロップダウンに表示
+  addSel.innerHTML = `<option value="">＋ メンバーを追加...</option>` +
+    state.members.filter(m=>!_projectMemberIds.includes(m.id))
+      .map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
+}
+
+function addProjectMember(id){
+  if(!id || _projectMemberIds.includes(id)) return;
+  _projectMemberIds.push(id);
+  _renderProjectMemberTags();
+}
+
+function removeProjectMember(id){
+  _projectMemberIds = _projectMemberIds.filter(x=>x!==id);
+  _renderProjectMemberTags();
+}
+
 function refreshProjectSelects(){
-  const memSel = document.getElementById("projectMembers");
-  memSel.innerHTML = state.members.map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
 
   const taskProjSel = document.getElementById("taskProject");
   taskProjSel.innerHTML = state.projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
@@ -1541,9 +1579,7 @@ function openProjectModal(id){
     document.getElementById("projectStatus").value = p.status;
     document.getElementById("projectStart").value = p.start||"";
     document.getElementById("projectEnd").value = p.end||"";
-    Array.from(document.getElementById("projectMembers").options).forEach(o=>{
-      o.selected = (p.memberIds||[]).includes(o.value);
-    });
+    _projectMemberIds = [...(p.memberIds||[])];
   }else{
     document.getElementById("projectModalTitle").textContent = "新規プロジェクト";
     document.getElementById("projectName").value = "";
@@ -1551,8 +1587,9 @@ function openProjectModal(id){
     document.getElementById("projectStatus").value = "計画中";
     document.getElementById("projectStart").value = "";
     document.getElementById("projectEnd").value = "";
-    Array.from(document.getElementById("projectMembers").options).forEach(o=>o.selected=false);
+    _projectMemberIds = [];
   }
+  _renderProjectMemberTags();
   document.getElementById("projectModalOverlay").classList.add("active");
 }
 
@@ -1560,7 +1597,7 @@ function saveProject(){
   const name = document.getElementById("projectName").value.trim();
   if(!name){ alert("プロジェクト名を入力してください"); return; }
   const id = document.getElementById("projectId").value;
-  const memberIds = Array.from(document.getElementById("projectMembers").selectedOptions).map(o=>o.value);
+  const memberIds = [..._projectMemberIds];
   const data = {
     name,
     description: document.getElementById("projectDesc").value.trim(),
