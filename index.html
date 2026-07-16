@@ -2248,16 +2248,10 @@ function renderAuthorizedManagers(){
   el.innerHTML = `<table>
     <thead><tr><th>メールアドレス</th><th></th></tr></thead>
     <tbody>
-    ${authorizedManagers.map(m => {
-      const isSelf = currentGoogleUser && m.email.toLowerCase() === currentGoogleUser.email.toLowerCase();
-      return `<tr>
+    ${authorizedManagers.map(m => `<tr>
         <td>${escapeHtml(m.email)}</td>
-        <td style="text-align:right;">${isSelf
-          ? '<span class="muted-text" style="font-size:12px;">（自分）</span>'
-          : `<button class="btn small danger" onclick="deleteAuthorizedManager('${m.id}')">削除</button>`}
-        </td>
-      </tr>`;
-    }).join("")}
+        <td style="text-align:right;"><button class="btn small danger" onclick="deleteAuthorizedManager('${m.id}')">削除</button></td>
+      </tr>`).join("")}
     </tbody>
   </table>`;
 }
@@ -2284,9 +2278,6 @@ async function saveAuthorizedManager(){
 async function deleteAuthorizedManager(id){
   const m = authorizedManagers.find(x => x.id === id);
   if(!m) return;
-  if(currentGoogleUser && m.email.toLowerCase() === currentGoogleUser.email.toLowerCase()){
-    alert("自分自身のアカウントは削除できません"); return;
-  }
   if(!confirm(`${m.email} をマネージャー認証から削除しますか？`)) return;
   await fbDb.ref(`settings/authorizedManagers/${id}`).remove();
   authorizedManagers = authorizedManagers.filter(x => x.id !== id);
