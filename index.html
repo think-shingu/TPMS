@@ -943,8 +943,6 @@ let myTaskFilter = "pending";
 
 const ROLE_KEY = "tpms_role_v1";
 const MANAGER_EMAIL = "haru84148@gmail.com"; // bootstrap用初期管理者
-// VAPID公開鍵（ボットで `npm run generate-keys` を実行して取得した値に置き換えてください）
-const VAPID_PUBLIC_KEY = "PASTE_YOUR_VAPID_PUBLIC_KEY_HERE";
 
 let authorizedManagers = []; // [{id, email}]
 
@@ -1123,20 +1121,9 @@ function _initGIS(){
 
 /* ──────────── Push / Notification ──────────── */
 
-function _urlBase64ToUint8Array(base64) {
-  const pad = '='.repeat((4 - base64.length % 4) % 4);
-  const b64 = (base64 + pad).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(b64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
-
 async function registerPushNotifications(){
-  if(!('serviceWorker' in navigator) || !('PushManager' in window)){
-    alert('このブラウザはプッシュ通知に対応していません。');
-    return;
-  }
-  if(VAPID_PUBLIC_KEY === 'PASTE_YOUR_VAPID_PUBLIC_KEY_HERE'){
-    alert('VAPID公開鍵が未設定です。ボットでキーを生成してindex.htmlに貼り付けてください。');
+  if(!('Notification' in window)){
+    alert('このブラウザはブラウザ通知に対応していません。');
     return;
   }
   const perm = await Notification.requestPermission();
@@ -1144,46 +1131,20 @@ async function registerPushNotifications(){
     alert('通知が拒否されました。ブラウザの設定から「許可」に変更してください。');
     return;
   }
-  try{
-    const reg = await navigator.serviceWorker.ready;
-    let sub = await reg.pushManager.getSubscription();
-    if(!sub){
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: _urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-    }
-    // Firebase に購読情報を保存（メンバーはmemberId、マネージャーは mgr_{uid}）
-    const key = currentRole === 'member' ? currentMemberId : `mgr_${currentGoogleUser.uid}`;
-    await fbDb.ref(`pushSubscriptions/${key}`).set({
-      subscription: sub.toJSON(),
-      type: currentRole,
-      memberId: currentRole === 'member' ? currentMemberId : null
-    });
-    _updatePushStatusBadge(true);
-    showToast('ブラウザ通知を有効にしました');
-  }catch(e){
-    console.error('Push登録失敗:', e);
-    alert('通知の登録に失敗しました: ' + e.message);
-  }
+  _updatePushStatusBadge(true);
+  showToast('ブラウザ通知を有効にしました');
 }
 
-async function _updatePushStatusBadge(active){
+function _updatePushStatusBadge(force){
+  const active = force !== undefined ? force : (Notification.permission === 'granted');
   const badge = document.getElementById('pushStatusBadge');
-  if(!badge) return;
-  if(active !== undefined){ badge.textContent = active ? '✅ 有効' : '未設定'; badge.className = 'push-status-badge' + (active ? ' active' : ''); return; }
-  if(!('serviceWorker' in navigator)) return;
-  const reg = await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.getSubscription();
-  badge.textContent = sub ? '✅ 有効' : '未設定';
-  badge.className = 'push-status-badge' + (sub ? ' active' : '');
-  // メンバーの通知ボタンも更新
+  if(badge){ badge.textContent = active ? '✅ 有効' : '未設定'; badge.className = 'push-status-badge' + (active ? ' active' : ''); }
   const mBtn = document.getElementById('memberPushBtn');
-  if(mBtn) mBtn.textContent = sub ? '🔔 通知有効中' : '🔔 通知を有効にする';
+  if(mBtn) mBtn.textContent = active ? '🔔 通知有効中' : '🔔 通知を有効にする';
 }
 
 async function loadNotificationSettings(){
-  _updatePushStatusBadge();
+  _updatePushStatusBadge(Notification.permission === 'granted');
   try{
     const snap = await fbDb.ref('notificationSettings').once('value');
     const s = snap.val() || {};
