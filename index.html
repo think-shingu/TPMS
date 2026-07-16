@@ -836,7 +836,7 @@
       <select id="taskDependsOn" multiple size="4"></select>
       <div class="muted-text">Ctrl/Cmdキーで複数選択。このタスクの前に完了しているべきタスクを選びます。</div>
     </div>
-    <div class="form-row"><label>締切</label><input type="date" id="taskDeadline"></div>
+    <div class="form-row"><label>締切</label><input type="date" id="taskDeadline" onchange="_updateCalAddBtn()"></div>
     <div class="form-row"><label>ステータス</label>
       <select id="taskStatus">
         <option value="未着手">未着手</option>
@@ -848,6 +848,7 @@
     <div class="modal-actions">
       <button class="btn danger" id="taskDeleteBtn" onclick="deleteTask()" style="display:none;">削除</button>
       <button class="btn secondary" onclick="closeModal('taskModalOverlay')">キャンセル</button>
+      <button class="btn secondary" id="taskCalAddBtn" onclick="addToGoogleCalendarFromModal()" style="display:none;">📅 Googleカレンダーに追加</button>
       <button class="btn" onclick="saveTask()">保存</button>
     </div>
   </div>
@@ -1253,6 +1254,7 @@ function _renderCalDayPanel(dateStr){
       <span class="badge ${statusBadgeClass(t.status)}">${t.status}</span>
       <span style="flex:1;">${escapeHtml(t.title)}</span>
       <span style="color:var(--muted);font-size:12px;">${escapeHtml(memberName(t.assigneeId))}</span>
+      <button class="btn small secondary" title="Googleカレンダーに追加" onclick="event.stopPropagation();addToGoogleCalendar('${t.id}')">📅</button>
     </div>
   `).join("");
   panel.style.display = "block";
@@ -1511,7 +1513,10 @@ function renderTasks(){
           <td>${escapeHtml(memberName(t.assigneeId))}</td>
           <td>${isOverdue(t) ? `<span class="badge overdue">${t.deadline||'-'}</span>` : (t.deadline||'-')}</td>
           <td><span class="badge ${statusBadgeClass(t.status)}">${t.status}</span></td>
-          <td><button class="btn small secondary viewer-hide" onclick="event.stopPropagation();openTaskModal('${t.id}')">編集</button></td>
+          <td style="display:flex;gap:4px;align-items:center;">
+            <button class="btn small secondary viewer-hide" onclick="event.stopPropagation();openTaskModal('${t.id}')">編集</button>
+            ${t.deadline ? `<button class="btn small secondary" title="Googleカレンダーに追加" onclick="event.stopPropagation();addToGoogleCalendar('${t.id}')">📅</button>` : ""}
+          </td>
         </tr>
       `).join("")}
       </tbody>
@@ -1549,12 +1554,58 @@ function openTaskModal(id){
     document.getElementById("taskProject").value = state.projects[0].id;
     document.getElementById("taskAssignee").value = "";
     document.getElementById("taskDeadline").value = "";
-    document.getElementById("taskPriority").value = "中";
     document.getElementById("taskStatus").value = "未着手";
     document.getElementById("taskNotes").value = "";
     refreshTaskDependsOnOptions();
   }
   document.getElementById("taskModalOverlay").classList.add("active");
+  _updateCalAddBtn();
+}
+
+function _updateCalAddBtn(){
+  const deadline = document.getElementById("taskDeadline").value;
+  const btn = document.getElementById("taskCalAddBtn");
+  if(btn) btn.style.display = deadline ? "inline-flex" : "none";
+}
+
+function addToGoogleCalendar(taskId){
+  const t = state.tasks.find(x => x.id === taskId);
+  if(!t || !t.deadline) return;
+  const details = [
+    t.notes,
+    t.assigneeId ? `担当: ${memberName(t.assigneeId)}` : ""
+  ].filter(Boolean).join("\n");
+  const dateCompact = t.deadline.replace(/-/g, "");
+  const endDate = new Date(t.deadline + "T00:00:00");
+  endDate.setDate(endDate.getDate() + 1);
+  const endCompact = endDate.toISOString().slice(0,10).replace(/-/g, "");
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(t.title)}`
+    + `&dates=${dateCompact}/${endCompact}`
+    + (details ? `&details=${encodeURIComponent(details)}` : "");
+  window.open(url, "_blank");
+}
+
+function addToGoogleCalendarFromModal(){
+  const title = document.getElementById("taskTitle").value.trim() || "タスク";
+  const deadline = document.getElementById("taskDeadline").value;
+  if(!deadline) return;
+  const notes = document.getElementById("taskNotes").value.trim();
+  const assigneeId = document.getElementById("taskAssignee").value;
+  const details = [
+    notes,
+    assigneeId ? `担当: ${memberName(assigneeId)}` : ""
+  ].filter(Boolean).join("\n");
+  const dateCompact = deadline.replace(/-/g, "");
+  // end date = deadline + 1 day (Google Calendar is exclusive)
+  const endDate = new Date(deadline + "T00:00:00");
+  endDate.setDate(endDate.getDate() + 1);
+  const endCompact = endDate.toISOString().slice(0,10).replace(/-/g, "");
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
+    + `&text=${encodeURIComponent(title)}`
+    + `&dates=${dateCompact}/${endCompact}`
+    + (details ? `&details=${encodeURIComponent(details)}` : "");
+  window.open(url, "_blank");
 }
 
 function saveTask(){
