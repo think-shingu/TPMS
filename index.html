@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>TPMS - Think新宮プロジェクトマネジメントシステム</title>
 <style>
   :root{
@@ -994,26 +997,36 @@ async function gcalSyncTask(rec, action){
 }
 
 const GIS_CLIENT_ID = "407404219726-f59o78jqglu49qa46gc4efhkdumo8dnm.apps.googleusercontent.com";
+let _gisInitialized = false;
+let _gisSigningIn = false;
 
 async function _handleGISCredential(response){
+  if(_gisSigningIn) return;
+  _gisSigningIn = true;
   try{
     const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
     await fbAuth.signInWithCredential(credential);
   }catch(e){
+    console.error("GIS signInWithCredential error:", e.code, e.message);
     alert("サインインに失敗しました: " + e.message);
+  }finally{
+    _gisSigningIn = false;
   }
 }
 
 function _initGIS(){
+  if(_gisInitialized) return;
   if(typeof google === "undefined" || !google.accounts){
     setTimeout(_initGIS, 100);
     return;
   }
+  _gisInitialized = true;
   google.accounts.id.initialize({
     client_id: GIS_CLIENT_ID,
     callback: _handleGISCredential,
     auto_select: false,
-    cancel_on_tap_outside: true
+    cancel_on_tap_outside: true,
+    use_fedcm_for_prompt: true
   });
   const el = document.getElementById("gis-signin-btn");
   if(el) google.accounts.id.renderButton(el, {
@@ -1026,8 +1039,14 @@ function _initGIS(){
 }
 
 async function signOutGoogle(){
+  try{
+    if(typeof google !== "undefined" && google.accounts){
+      google.accounts.id.disableAutoSelect();
+    }
+  }catch(e){}
   try{ await fbAuth.signOut(); }catch(e){ console.warn(e); }
   try{ localStorage.removeItem(ROLE_KEY); }catch(e){ console.warn(e); }
+  _gisSigningIn = false;
   currentGoogleUser = null;
   currentUserName   = null;
   currentRole = null;
@@ -2468,6 +2487,9 @@ window.addEventListener("DOMContentLoaded", ()=>{
   fbDb   = firebase.database();
 
   fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+  // 過去のリダイレクト認証の残骸を消去（missing initial stateエラーの原因になる）
+  fbAuth.getRedirectResult().catch(()=>{});
 
   // 認証状態を監視（ページリロード時も自動復元）
   fbAuth.onAuthStateChanged(async (user) => {
