@@ -775,7 +775,8 @@
       <button data-mytab="done" onclick="switchMyTab('done')">完了済み</button>
     </div>
     <div id="myTaskList"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+      <button class="btn secondary small" onclick="openMemberProjectModal()" style="opacity:.75;">＋ プロジェクトを追加</button>
       <button class="btn secondary small" onclick="openMemberTaskModal()" style="opacity:.75;">＋ タスクを追加</button>
     </div>
   </section>
@@ -1785,6 +1786,15 @@ function renderMyTasks(){
       </div>
     `;
   }).join("");
+}
+
+function openMemberProjectModal(){
+  if(currentRole !== "member" || !currentMemberId) return;
+  openProjectModal();
+  // 自分を参加メンバーとして自動選択
+  Array.from(document.getElementById("projectMembers").options).forEach(o=>{
+    o.selected = o.value === currentMemberId;
+  });
 }
 
 function openMemberTaskModal(){
