@@ -1034,10 +1034,7 @@ async function gcalSyncTask(rec, action){
 async function signInWithGoogle(){
   try{
     const provider = new firebase.auth.GoogleAuthProvider();
-    provider.addScope("https://www.googleapis.com/auth/calendar.events");
-    const result = await fbAuth.signInWithPopup(provider);
-    const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-    if(cred && cred.accessToken) _storeGcalToken(cred.accessToken);
+    await fbAuth.signInWithPopup(provider);
   }catch(e){
     if(e.code !== "auth/popup-closed-by-user") alert("サインインに失敗しました: " + e.message);
   }
