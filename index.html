@@ -1123,12 +1123,16 @@ function showRoleGate(){
   document.getElementById("roleGate").classList.remove("hidden");
 }
 
+function _confirmSignOut(){
+  if(confirm("サインイン画面に戻りますか？")) signOutGoogle();
+}
+
 function _buildAvatarHtml(){
   if(!currentGoogleUser) return "";
   const tip = "タップしてアカウントを変更";
   return currentGoogleUser.picture
-    ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="" title="${tip}" onclick="signOutGoogle()">`
-    : `<span class="header-avatar-placeholder" title="${tip}" onclick="signOutGoogle()">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
+    ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="" title="${tip}" onclick="_confirmSignOut()">`
+    : `<span class="header-avatar-placeholder" title="${tip}" onclick="_confirmSignOut()">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
 }
 
 function applyRole(role, memberId){
