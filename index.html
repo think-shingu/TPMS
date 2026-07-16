@@ -1091,9 +1091,14 @@ function applyRole(role, memberId){
   if(role === "manager"){
     badge.innerHTML = `${avatarHtml}${escapeHtml(storedName)}（マネージャー） <button onclick="switchRole()">切り替え</button>`;
     switchTab("dashboard");
+  }else if(role === "viewer"){
+    badge.innerHTML = `${avatarHtml}${escapeHtml(storedName)}（閲覧モード） <button onclick="exitViewerMode()">メンバー画面に戻る</button>`;
+    switchTab("dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
-    badge.innerHTML = `${avatarHtml}${escapeHtml(m ? m.name : "メンバー")}さん <button onclick="switchRole()">切り替え</button>`;
+    const isManagerEmail = currentGoogleUser && currentGoogleUser.email.toLowerCase() === MANAGER_EMAIL.toLowerCase();
+    const viewerBtn = isManagerEmail ? "" : ` <button onclick="enterViewerMode()">管理画面を閲覧</button>`;
+    badge.innerHTML = `${avatarHtml}${escapeHtml(m ? m.name : "メンバー")}さん <button onclick="switchRole()">切り替え</button>${viewerBtn}`;
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
     document.getElementById("myTasks").classList.add("active");
     renderMyTasks();
@@ -1101,6 +1106,27 @@ function applyRole(role, memberId){
 }
 
 function switchRole(){ showRoleGate(); }
+
+function enterViewerMode(){
+  currentRole = "viewer";
+  document.body.dataset.role = "viewer";
+  const storedName = currentUserName
+    ? `${currentUserName.lastName} ${currentUserName.firstName}`
+    : (currentGoogleUser ? currentGoogleUser.name : "");
+  let avatarHtml = "";
+  if(currentGoogleUser){
+    avatarHtml = currentGoogleUser.picture
+      ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="">`
+      : `<span class="header-avatar-placeholder">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
+  }
+  document.getElementById("roleBadge").innerHTML =
+    `${avatarHtml}${escapeHtml(storedName)}（閲覧モード） <button onclick="exitViewerMode()">メンバー画面に戻る</button>`;
+  switchTab("dashboard");
+}
+
+function exitViewerMode(){
+  applyRole("member", currentMemberId);
+}
 
 
 /* ---------------- Nav ---------------- */
