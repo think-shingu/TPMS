@@ -892,10 +892,10 @@ function toggleNotifBell(){
   OneSignalDeferred.push(async function(OneSignal){
     if(!OneSignal.Notifications.permission){
       await OneSignal.Notifications.requestPermission();
-      notifPermission = OneSignal.Notifications.permission;
     } else {
       showToast("通知はオンです。ブラウザの設定でオフにできます。");
     }
+    notifPermission = OneSignal.Notifications.permission;
     _updateNotifBell();
   });
 }
