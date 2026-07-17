@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TPMS - Think新宮プロジェクトマネジメントシステム</title>
+<title>Think新宮プロジェクト管理システム</title>
 <style>
   :root{
     --primary:#2563eb;
@@ -494,6 +494,8 @@
   .signout-link{font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;margin-top:10px;}
   .header-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.5);vertical-align:middle;margin-right:4px;}
   .header-avatar-placeholder{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;vertical-align:middle;margin-right:4px;}
+  .header-icon-btn{background:rgba(255,255,255,.18);border:none;border-radius:7px;padding:6px 8px;color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s;line-height:0;}
+  .header-icon-btn:hover{background:rgba(255,255,255,.32);}
   .loading-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;z-index:400;flex-direction:column;gap:16px;}
   .loading-overlay.hidden{display:none;}
   .loading-spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
@@ -526,8 +528,8 @@
 
 <div class="role-gate hidden" id="roleGate">
   <div class="role-gate-card">
-    <h2>TPMSへようこそ</h2>
-    <p class="sub">Think新宮プロジェクトマネジメントシステム</p>
+    <h2>Think新宮へようこそ</h2>
+    <p class="sub">Think新宮プロジェクト管理システム</p>
 
     <!-- Step 1: Google Sign-In -->
     <div id="authStep" class="auth-step">
@@ -575,10 +577,13 @@
 
 <header>
   <div class="brand">
-    <h1>TPMS</h1>
-    <p>Think新宮プロジェクトマネジメントシステム</p>
+    <h1>Think新宮</h1>
+    <p>プロジェクト管理システム</p>
   </div>
   <div class="actions">
+    <button class="header-icon-btn" onclick="switchRole()" title="サインイン画面に戻る">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
     <span class="role-badge" id="roleBadge"></span>
   </div>
 </header>
@@ -1037,16 +1042,19 @@ function applyRole(role, memberId){
     ? `${currentUserName.lastName} ${currentUserName.firstName}`
     : (currentGoogleUser ? currentGoogleUser.name : "");
   if(role === "manager"){
-    badge.innerHTML = `${avatarHtml}${escapeHtml(storedName)}（マネージャー） <button onclick="switchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarHtml}${escapeHtml(storedName)}（マネージャー）`;
     switchTab("dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
-    badge.innerHTML = `${avatarHtml}${escapeHtml(m ? m.name : "メンバー")}さん <button onclick="switchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarHtml}${escapeHtml(m ? m.name : "メンバー")}さん`;
     switchTab("myTasks");
   }
 }
 
-function switchRole(){ showRoleGate(); }
+function switchRole(){
+  if(!confirm("サインイン画面に戻りますか？")) return;
+  showRoleGate();
+}
 
 /* ---------------- Nav ---------------- */
 function switchTab(tab){
