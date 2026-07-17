@@ -1099,7 +1099,7 @@ function applyRole(role, memberId){
     : (currentGoogleUser ? currentGoogleUser.name : "");
   const avatarClickHtml = `<button class="avatar-btn" onclick="switchRole()" title="サインイン画面に戻る">${avatarHtml}</button>`;
   if(role === "manager"){
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（マネージャー）`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（マネージャー） <button onclick="switchRole()">切り替え</button>`;
     switchTab("dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
