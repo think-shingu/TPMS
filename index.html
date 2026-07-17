@@ -75,6 +75,7 @@
   }
 
   main{padding:24px;max-width:1200px;margin:0 auto;}
+  body.cal-active main{max-width:none;padding:16px 24px;}
   .section{display:none;}
   .section.active{display:block;}
 
@@ -188,7 +189,7 @@
   .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);background:#f8fafc;border-bottom:1px solid var(--border);}
   .cal-dow{padding:7px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);}
   .cal-days{display:grid;grid-template-columns:repeat(7,1fr);}
-  .cal-cell{min-height:76px;padding:4px 4px 2px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#fff;}
+  .cal-cell{height:calc((100vh - 260px) / 6);min-height:90px;padding:5px 6px 3px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#fff;overflow:hidden;}
   .cal-cell:nth-child(7n){border-right:none;}
   .cal-cell.other-month{background:#fafafa;}
   .cal-cell.today-cell{background:#eff6ff;}
@@ -1097,7 +1098,7 @@ function applyRole(role, memberId){
   const storedName = currentUserName
     ? `${currentUserName.lastName} ${currentUserName.firstName}`
     : (currentGoogleUser ? currentGoogleUser.name : "");
-  const avatarClickHtml = `<button class="avatar-btn" onclick="switchRole()" title="サインイン画面に戻る">${avatarHtml}</button>`;
+  const avatarClickHtml = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button>`;
   if(role === "manager"){
     badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（マネージャー） <button onclick="switchRole()">切り替え</button>`;
     switchTab("dashboard");
@@ -1109,7 +1110,26 @@ function applyRole(role, memberId){
   }
 }
 
-function switchRole(){
+async function switchRole(){
+  isReadOnly = false;
+  document.body.removeAttribute("data-readonly");
+  if(currentRole === "manager"){
+    const matched = currentGoogleUser?.email
+      ? state.members.find(m => m.email?.toLowerCase() === currentGoogleUser.email.toLowerCase())
+      : null;
+    saveRoleState("member", matched ? matched.id : null);
+    applyRole("member", matched ? matched.id : null);
+  } else {
+    if(!currentGoogleUser?.email){ showRoleGate(); return; }
+    const emailKey = currentGoogleUser.email.toLowerCase().replace(/\./g, ",");
+    const snap = await fbDb.ref(`managerEmails/${emailKey}`).once("value");
+    if(!snap.exists()){ showToast("マネージャー権限がありません"); return; }
+    saveRoleState("manager", null);
+    applyRole("manager", null);
+  }
+}
+
+function returnToSignIn(){
   if(!confirm("サインイン画面に戻りますか？")) return;
   isReadOnly = false;
   document.body.removeAttribute("data-readonly");
@@ -1142,6 +1162,8 @@ function exitViewerMode(){
 function switchTab(tab){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
   document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active", s.id===tab));
+  const isCal = tab==="calendar"||tab==="memberCalendar";
+  document.body.classList.toggle("cal-active", isCal);
   if(tab==="taskflow")       renderTaskFlow();
   if(tab==="myTasks")        renderMyTasks();
   if(tab==="projects")       renderProjects();
