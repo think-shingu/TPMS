@@ -585,6 +585,10 @@
           🙋 メンバーとして利用
           <span class="sub">自分がやるべきタスクだけをシンプルに確認</span>
         </button>
+        <button id="chooseViewerBtn" onclick="enterViewerMode()">
+          👁 総合画面を見る
+          <span class="sub">プロジェクト・タスク全体を閲覧のみ（編集不可）</span>
+        </button>
       </div>
       <div style="text-align:center;margin-top:12px;">
         <button class="signout-link" onclick="signOutGoogle()">別のアカウントでサインイン</button>
@@ -955,7 +959,9 @@ async function _showRoleStep(){
   document.getElementById("roleStep").style.display = "";
   _renderGoogleUserCard();
   const managerBtn = document.getElementById("chooseManagerBtn");
+  const viewerBtn  = document.getElementById("chooseViewerBtn");
   managerBtn.style.display = "none";
+  viewerBtn.style.display  = "";
   isManagerAuthorized = false;
   if(currentGoogleUser?.email && fbDb){
     const emailKey = currentGoogleUser.email.toLowerCase().replace(/\./g, ",");
@@ -963,9 +969,14 @@ async function _showRoleStep(){
     if(snap.exists()){
       isManagerAuthorized = true;
       managerBtn.style.display = "";
+      viewerBtn.style.display  = "none";
     } else {
       const allSnap = await fbDb.ref("managerEmails").once("value");
-      if(!allSnap.exists()){ isManagerAuthorized = true; managerBtn.style.display = ""; }
+      if(!allSnap.exists()){
+        isManagerAuthorized = true;
+        managerBtn.style.display = "";
+        viewerBtn.style.display  = "none";
+      }
     }
   }
 }
@@ -1131,6 +1142,7 @@ function returnToSignIn(){
 }
 
 function enterViewerMode(){
+  hideRoleGate();
   isReadOnly = true;
   currentRole = "manager";
   document.body.dataset.role = "manager";
