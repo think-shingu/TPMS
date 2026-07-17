@@ -866,15 +866,8 @@ let notifPermission = localStorage.getItem("tpms_notif") === "1";
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
   await OneSignal.init({ appId: ONESIGNAL_APP_ID, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true });
-  const actuallyOptedIn = !!OneSignal.User.PushSubscription.optedIn;
-  notifPermission = actuallyOptedIn;
-  localStorage.setItem("tpms_notif", actuallyOptedIn ? "1" : "0");
+  // optedIn は init 直後に不確定なため localStorage の値をそのまま使う
   _updateNotifBell();
-  OneSignal.User.PushSubscription.addEventListener("change", (change) => {
-    notifPermission = !!change.current.optedIn;
-    localStorage.setItem("tpms_notif", notifPermission ? "1" : "0");
-    _updateNotifBell();
-  });
 });
 
 function _osExtId(email){ return email.toLowerCase().replace(/[.@]/g, "_"); }
@@ -893,19 +886,24 @@ function osLogin(email){
 
 function toggleNotifBell(){
   OneSignalDeferred.push(async function(OneSignal){
-    if(OneSignal.User.PushSubscription.optedIn){
-      await OneSignal.User.PushSubscription.optOut();
-      notifPermission = false;
-      showToast("通知をオフにしました");
-    } else {
-      if(!OneSignal.Notifications.permission){
-        await OneSignal.Notifications.requestPermission();
+    try{
+      if(notifPermission){
+        await OneSignal.User.PushSubscription.optOut();
+        notifPermission = false;
+        showToast("通知をオフにしました");
+      } else {
+        if(!OneSignal.Notifications.permission){
+          await OneSignal.Notifications.requestPermission();
+        }
+        await OneSignal.User.PushSubscription.optIn();
+        notifPermission = true;
+        showToast("通知をオンにしました");
       }
-      await OneSignal.User.PushSubscription.optIn();
-      notifPermission = true;
-      showToast("通知をオンにしました");
+      localStorage.setItem("tpms_notif", notifPermission ? "1" : "0");
+    }catch(e){
+      console.error("Notification toggle failed:", e);
+      showToast("通知の切り替えに失敗しました");
     }
-    localStorage.setItem("tpms_notif", notifPermission ? "1" : "0");
     _updateNotifBell();
   });
 }
