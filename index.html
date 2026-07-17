@@ -864,6 +864,7 @@ let state = {
 let currentRole = null;
 let currentMemberId = null;
 let isReadOnly = false;
+let isManagerAuthorized = false;
 let myTaskFilter = "pending";
 
 const ROLE_KEY = "tpms_role_v1";
@@ -972,14 +973,16 @@ async function _showRoleStep(){
   _renderGoogleUserCard();
   const managerBtn = document.getElementById("chooseManagerBtn");
   managerBtn.style.display = "none";
+  isManagerAuthorized = false;
   if(currentGoogleUser?.email && fbDb){
     const emailKey = currentGoogleUser.email.toLowerCase().replace(/\./g, ",");
     const snap = await fbDb.ref(`managerEmails/${emailKey}`).once("value");
     if(snap.exists()){
+      isManagerAuthorized = true;
       managerBtn.style.display = "";
     } else {
       const allSnap = await fbDb.ref("managerEmails").once("value");
-      if(!allSnap.exists()) managerBtn.style.display = "";
+      if(!allSnap.exists()){ isManagerAuthorized = true; managerBtn.style.display = ""; }
     }
   }
 }
@@ -1105,7 +1108,7 @@ function applyRole(role, memberId){
   }else{
     const m = state.members.find(x=>x.id===memberId);
     const displayName = m ? m.name : (currentGoogleUser ? currentGoogleUser.name : "ゲスト");
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん <button onclick="enterViewerMode()">マネージャー画面</button>`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん <button onclick="memberSwitchRole()">切り替え</button>`;
     switchTab("myTasks");
   }
 }
@@ -1129,6 +1132,14 @@ async function switchRole(){
   }
 }
 
+function memberSwitchRole(){
+  if(isManagerAuthorized){
+    switchRole();
+  } else {
+    enterViewerMode();
+  }
+}
+
 function returnToSignIn(){
   if(!confirm("サインイン画面に戻りますか？")) return;
   isReadOnly = false;
@@ -1147,7 +1158,7 @@ function enterViewerMode(){
       ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="">`
       : `<span class="header-avatar-placeholder">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
   }
-  badge.innerHTML = `<button class="avatar-btn" onclick="exitViewerMode()" title="メンバー画面に戻る">${avatarHtml}</button><span class="viewer-badge-label">閲覧モード</span><button onclick="exitViewerMode()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer;">メンバー画面に戻る</button>`;
+  badge.innerHTML = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button><span class="viewer-badge-label">閲覧モード</span><button onclick="exitViewerMode()">切り替え</button>`;
   switchTab("dashboard");
   renderAll();
 }
@@ -2428,6 +2439,16 @@ window.addEventListener("DOMContentLoaded", ()=>{
       };
       await loadFromFirestore();
       currentUserName = await _loadUserName(user.uid);
+      if(user.email){
+        const _ek = user.email.toLowerCase().replace(/\./g, ",");
+        const _ms = await fbDb.ref(`managerEmails/${_ek}`).once("value");
+        if(_ms.exists()){
+          isManagerAuthorized = true;
+        } else {
+          const _all = await fbDb.ref("managerEmails").once("value");
+          isManagerAuthorized = !_all.exists();
+        }
+      }
       renderAll();
 
       if(!currentUserName){
