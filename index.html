@@ -512,6 +512,8 @@
   .header-avatar-placeholder{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;vertical-align:middle;margin-right:4px;}
   .avatar-btn{background:none;border:none;padding:0;cursor:pointer;border-radius:50%;display:inline-flex;align-items:center;transition:opacity .15s;vertical-align:middle;margin-right:4px;}
   .avatar-btn:hover{opacity:.75;}
+  .notif-bell-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:0 3px;line-height:1;opacity:.85;vertical-align:middle;}
+  .notif-bell-btn:hover{opacity:1;}
   .viewer-badge-label{font-size:12px;background:rgba(255,255,255,.25);border-radius:4px;padding:2px 7px;margin-right:6px;vertical-align:middle;}
   body[data-readonly="true"] .gear-btn{display:none;}
   .loading-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;z-index:400;flex-direction:column;gap:16px;}
@@ -536,6 +538,7 @@
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
 
@@ -855,6 +858,65 @@ let myTaskFilter = "pending";
 
 const ROLE_KEY = "tpms_role_v1";
 
+/* ---------------- OneSignal Push Notifications ---------------- */
+const ONESIGNAL_APP_ID = "949558e6-643c-4c05-ab30-877c088b52db";
+let oneSignalApiKey = null; // Firebase /config/onesignalApiKey から取得
+let notifPermission = false;
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal){
+  await OneSignal.init({ appId: ONESIGNAL_APP_ID, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true });
+  notifPermission = OneSignal.Notifications.permission;
+  _updateNotifBell();
+  OneSignal.Notifications.addEventListener("permissionChange", (granted) => {
+    notifPermission = granted;
+    _updateNotifBell();
+  });
+});
+
+function _osExtId(email){ return email.toLowerCase().replace(/[.@]/g, "_"); }
+
+function _updateNotifBell(){
+  const bell = document.getElementById("notifBell");
+  if(bell) bell.textContent = notifPermission ? "🔔" : "🔕";
+}
+
+function osLogin(email){
+  if(!email) return;
+  OneSignalDeferred.push(async function(OneSignal){
+    try{ await OneSignal.login(_osExtId(email)); }catch(e){ console.warn("OneSignal login failed", e); }
+  });
+}
+
+function toggleNotifBell(){
+  OneSignalDeferred.push(async function(OneSignal){
+    if(!OneSignal.Notifications.permission){
+      await OneSignal.Notifications.requestPermission();
+      notifPermission = OneSignal.Notifications.permission;
+    } else {
+      showToast("通知はオンです。ブラウザの設定でオフにできます。");
+    }
+    _updateNotifBell();
+  });
+}
+
+async function sendPushNotification(targetEmail, title, body){
+  if(!targetEmail || !oneSignalApiKey) return;
+  try{
+    await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Key ${oneSignalApiKey}` },
+      body: JSON.stringify({
+        app_id: ONESIGNAL_APP_ID,
+        headings: { en: title, ja: title },
+        contents: { en: body,  ja: body  },
+        include_aliases: { external_id: [_osExtId(targetEmail)] },
+        target_channel: "push"
+      })
+    });
+  }catch(e){ console.warn("Push notification failed", e); }
+}
+
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDWwC3PuGH0L5dFgKzhI0Or00GbJcR-bSI",
   authDomain:        "tpms-9ce3b.firebaseapp.com",
@@ -1096,15 +1158,17 @@ function applyRole(role, memberId){
     ? `${currentUserName.lastName} ${currentUserName.firstName}`
     : (currentGoogleUser ? currentGoogleUser.name : "");
   const avatarClickHtml = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button>`;
+  const bellBtn = `<button id="notifBell" class="notif-bell-btn" onclick="toggleNotifBell()" title="プッシュ通知設定">${notifPermission ? "🔔" : "🔕"}</button>`;
   if(role === "manager"){
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（マネージャー） <button onclick="switchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（マネージャー）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
     switchTab("dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
     const displayName = m ? m.name : (currentGoogleUser ? currentGoogleUser.name : "ゲスト");
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん <button onclick="memberSwitchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん${bellBtn} <button onclick="memberSwitchRole()">切り替え</button>`;
     switchTab("myTasks");
   }
+  if(currentGoogleUser?.email) osLogin(currentGoogleUser.email);
 }
 
 async function switchRole(){
@@ -1154,7 +1218,8 @@ function enterViewerMode(){
       ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="">`
       : `<span class="header-avatar-placeholder">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
   }
-  badge.innerHTML = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button><span class="viewer-badge-label">閲覧モード</span><button onclick="exitViewerMode()">切り替え</button>`;
+  const bellBtn2 = `<button id="notifBell" class="notif-bell-btn" onclick="toggleNotifBell()" title="プッシュ通知設定">${notifPermission ? "🔔" : "🔕"}</button>`;
+  badge.innerHTML = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button><span class="viewer-badge-label">閲覧モード</span>${bellBtn2}<button onclick="exitViewerMode()">切り替え</button>`;
   switchTab("dashboard");
   renderAll();
 }
@@ -1593,6 +1658,7 @@ function saveTask(){
   let id = document.getElementById("taskId").value;
   const isNew = !id;
   if(isNew) id = uid();
+  const prevAssigneeId = isNew ? null : (state.tasks.find(x => x.id === id)?.assigneeId || null);
   const dependsOn = Array.from(document.getElementById("taskDependsOn").selectedOptions).map(o=>o.value).filter(Boolean);
 
   if(wouldCreateCycle(id, dependsOn)){
@@ -1618,6 +1684,20 @@ function saveTask(){
     Object.assign(rec, data);
   }
   fsSet("tasks", rec.id, rec);
+
+  const newAssigneeId = data.assigneeId;
+  if(newAssigneeId && newAssigneeId !== prevAssigneeId){
+    const assignee = state.members.find(m => m.id === newAssigneeId);
+    if(assignee?.email && assignee.email.toLowerCase() !== (currentGoogleUser?.email || "").toLowerCase()){
+      const projName = state.projects.find(p => p.id === data.projectId)?.name || "";
+      sendPushNotification(
+        assignee.email,
+        "タスクが割り当てられました",
+        `「${title}」${projName ? `（${projName}）` : ""}`
+      );
+    }
+  }
+
   closeModal("taskModalOverlay");
   renderAll();
   showToast("タスクを保存しました");
@@ -2406,6 +2486,8 @@ window.addEventListener("DOMContentLoaded", ()=>{
         }
       }
       if(currentUserName) await _ensureMemberRecord(currentGoogleUser, currentUserName);
+      const _cfgSnap = await fbDb.ref("config/onesignalApiKey").once("value");
+      if(_cfgSnap.exists()) oneSignalApiKey = _cfgSnap.val();
       renderAll();
 
       if(!currentUserName){
