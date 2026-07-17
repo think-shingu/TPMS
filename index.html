@@ -244,10 +244,6 @@
   .role-choice button .sub{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px;}
   .role-choice button:hover{border-color:var(--primary);background:#eff6ff;}
   .role-choice button.selected{border-color:var(--primary);background:#eff6ff;}
-  .member-select-box{display:none;margin-top:14px;text-align:left;}
-  .member-select-box.show{display:block;}
-  .member-select-box select{width:100%;margin-bottom:10px;}
-  .member-select-box .btn{width:100%;}
 
   /* Role badge in header */
   .role-badge{
@@ -569,10 +565,6 @@
           🙋 メンバーとして利用
           <span class="sub">自分がやるべきタスクだけをシンプルに確認</span>
         </button>
-      </div>
-      <div class="member-select-box" id="memberSelectBox">
-        <select id="roleMemberSelect"></select>
-        <button class="btn" onclick="confirmMemberRole()">この人として開始</button>
       </div>
       <div style="text-align:center;margin-top:12px;">
         <button class="signout-link" onclick="signOutGoogle()">別のアカウントでサインイン</button>
@@ -986,43 +978,32 @@ function saveRoleState(role, memberId){
 
 function chooseRole(role){
   if(role === "manager"){
-    document.getElementById("chooseManagerBtn").classList.add("selected");
-    document.getElementById("chooseMemberBtn").classList.remove("selected");
-    document.getElementById("memberSelectBox").classList.remove("show");
     saveRoleState("manager", null);
     applyRole("manager", null);
     hideRoleGate();
   }else{
-    document.getElementById("chooseMemberBtn").classList.add("selected");
-    document.getElementById("chooseManagerBtn").classList.remove("selected");
-    populateRoleMemberSelect();
-    document.getElementById("memberSelectBox").classList.add("show");
+    if(currentGoogleUser && currentGoogleUser.email){
+      const matched = state.members.find(m => m.email && m.email.toLowerCase() === currentGoogleUser.email.toLowerCase());
+      if(matched){
+        saveRoleState("member", matched.id);
+        applyRole("member", matched.id);
+        hideRoleGate();
+        showToast(`${matched.name}さんとしてサインインしました`);
+        return;
+      }
+    }
+    alert("このGoogleアカウントに紐づくメンバーが見つかりませんでした。\nマネージャーにメールアドレスを登録してもらってください。");
   }
-}
-
-function populateRoleMemberSelect(){
-  const sel = document.getElementById("roleMemberSelect");
-  if(state.members.length === 0){
-    sel.innerHTML = `<option value="">先にマネージャーがメンバーを登録してください</option>`;
-    return;
-  }
-  sel.innerHTML = state.members.map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
 }
 
 function confirmMemberRole(){
-  const sel = document.getElementById("roleMemberSelect");
-  const memberId = sel.value;
-  if(!memberId){ alert("メンバーを選択してください"); return; }
-  saveRoleState("member", memberId);
-  applyRole("member", memberId);
-  hideRoleGate();
+  // 後方互換のため残す（呼び出しなし）
 }
 
 function hideRoleGate(){ document.getElementById("roleGate").classList.add("hidden"); }
 function showRoleGate(){
   document.getElementById("chooseManagerBtn").classList.remove("selected");
   document.getElementById("chooseMemberBtn").classList.remove("selected");
-  document.getElementById("memberSelectBox").classList.remove("show");
   if(currentGoogleUser){
     document.getElementById("authStep").style.display = "none";
     if(!currentUserName){
