@@ -768,7 +768,7 @@
     <h3 id="taskModalTitle">新規タスク</h3>
     <input type="hidden" id="taskId">
     <div class="form-row"><label>タスク名</label><input type="text" id="taskTitle"></div>
-    <div class="form-row"><label>プロジェクト</label><select id="taskProject" onchange="refreshTaskDependsOnOptions()"></select></div>
+    <div class="form-row"><label>プロジェクト</label><select id="taskProject" onchange="refreshTaskDependsOnOptions();refreshAssigneeByProject()"></select></div>
     <div class="form-row" id="taskAssigneeRow">
       <label>担当者</label>
       <select id="taskAssignee"><option value="">未割当</option></select>
@@ -1321,6 +1321,7 @@ function openTaskModal(id){
     refreshTaskDependsOnOptions();
     const depSel = document.getElementById("taskDependsOn");
     Array.from(depSel.options).forEach(o=>{ o.selected = (t.dependsOn||[]).includes(o.value); });
+    refreshAssigneeByProject();
   }else{
     document.getElementById("taskModalTitle").textContent = "新規タスク";
     document.getElementById("taskTitle").value = "";
@@ -1330,6 +1331,7 @@ function openTaskModal(id){
     document.getElementById("taskStatus").value = "未着手";
     document.getElementById("taskNotes").value = "";
     refreshTaskDependsOnOptions();
+    refreshAssigneeByProject();
   }
   document.getElementById("taskModalOverlay").classList.add("active");
 }
@@ -1512,14 +1514,25 @@ function renderMyTasks(){
   }).join("");
 }
 
+function refreshAssigneeByProject(){
+  if(currentRole !== "member") return;
+  const projectId = document.getElementById("taskProject").value;
+  const assigneeSel = document.getElementById("taskAssignee");
+  const lockNote = document.getElementById("taskAssigneeLockNote");
+  if(!projectId){
+    assigneeSel.value = currentMemberId;
+    assigneeSel.disabled = true;
+    lockNote.style.display = "block";
+  } else {
+    assigneeSel.disabled = false;
+    lockNote.style.display = "none";
+  }
+}
+
 function openMemberTaskModal(){
   if(currentRole !== "member" || !currentMemberId) return;
   openTaskModal();
   document.getElementById("taskModalTitle").textContent = "タスクを追加";
-  const assigneeSel = document.getElementById("taskAssignee");
-  assigneeSel.value = currentMemberId;
-  assigneeSel.disabled = true;
-  document.getElementById("taskAssigneeLockNote").style.display = "block";
 }
 
 function toggleMyTaskDone(taskId){
