@@ -861,15 +861,18 @@ const ROLE_KEY = "tpms_role_v1";
 /* ---------------- OneSignal Push Notifications ---------------- */
 const ONESIGNAL_APP_ID = "949558e6-643c-4c05-ab30-877c088b52db";
 let oneSignalApiKey = null; // Firebase /config/onesignalApiKey から取得
-let notifPermission = false;
+let notifPermission = localStorage.getItem("tpms_notif") === "1";
 
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
   await OneSignal.init({ appId: ONESIGNAL_APP_ID, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true });
-  notifPermission = !!OneSignal.User.PushSubscription.optedIn;
+  const actuallyOptedIn = !!OneSignal.User.PushSubscription.optedIn;
+  notifPermission = actuallyOptedIn;
+  localStorage.setItem("tpms_notif", actuallyOptedIn ? "1" : "0");
   _updateNotifBell();
   OneSignal.User.PushSubscription.addEventListener("change", (change) => {
     notifPermission = !!change.current.optedIn;
+    localStorage.setItem("tpms_notif", notifPermission ? "1" : "0");
     _updateNotifBell();
   });
 });
@@ -892,15 +895,17 @@ function toggleNotifBell(){
   OneSignalDeferred.push(async function(OneSignal){
     if(OneSignal.User.PushSubscription.optedIn){
       await OneSignal.User.PushSubscription.optOut();
+      notifPermission = false;
       showToast("通知をオフにしました");
     } else {
       if(!OneSignal.Notifications.permission){
         await OneSignal.Notifications.requestPermission();
       }
       await OneSignal.User.PushSubscription.optIn();
+      notifPermission = true;
       showToast("通知をオンにしました");
     }
-    notifPermission = !!OneSignal.User.PushSubscription.optedIn;
+    localStorage.setItem("tpms_notif", notifPermission ? "1" : "0");
     _updateNotifBell();
   });
 }
