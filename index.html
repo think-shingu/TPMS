@@ -866,10 +866,10 @@ let notifPermission = false;
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
   await OneSignal.init({ appId: ONESIGNAL_APP_ID, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true });
-  notifPermission = OneSignal.Notifications.permission;
+  notifPermission = !!OneSignal.User.PushSubscription.optedIn;
   _updateNotifBell();
-  OneSignal.Notifications.addEventListener("permissionChange", (granted) => {
-    notifPermission = granted;
+  OneSignal.User.PushSubscription.addEventListener("change", (change) => {
+    notifPermission = !!change.current.optedIn;
     _updateNotifBell();
   });
 });
@@ -890,12 +890,17 @@ function osLogin(email){
 
 function toggleNotifBell(){
   OneSignalDeferred.push(async function(OneSignal){
-    if(!OneSignal.Notifications.permission){
-      await OneSignal.Notifications.requestPermission();
+    if(OneSignal.User.PushSubscription.optedIn){
+      await OneSignal.User.PushSubscription.optOut();
+      showToast("通知をオフにしました");
     } else {
-      showToast("通知はオンです。ブラウザの設定でオフにできます。");
+      if(!OneSignal.Notifications.permission){
+        await OneSignal.Notifications.requestPermission();
+      }
+      await OneSignal.User.PushSubscription.optIn();
+      showToast("通知をオンにしました");
     }
-    notifPermission = OneSignal.Notifications.permission;
+    notifPermission = !!OneSignal.User.PushSubscription.optedIn;
     _updateNotifBell();
   });
 }
