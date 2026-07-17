@@ -1213,9 +1213,18 @@ function renderCalView(containerId, tasks){
   const startDow = firstDay.getDay();
 
   const taskMap = {};
-  tasks.filter(t=>t.end).forEach(t=>{
-    if(!taskMap[t.end]) taskMap[t.end]=[];
-    taskMap[t.end].push(t);
+  const monthStart = new Date(calYear, calMonth, 1);
+  const monthEnd   = new Date(calYear, calMonth+1, 0);
+  tasks.filter(t=>t.start||t.end).forEach(t=>{
+    const s = new Date(t.start||t.end);
+    const e = new Date(t.end  ||t.start);
+    const from = s < monthStart ? new Date(monthStart) : new Date(s);
+    const to   = e > monthEnd   ? new Date(monthEnd)   : new Date(e);
+    for(const cur = new Date(from); cur <= to; cur.setDate(cur.getDate()+1)){
+      const key = cur.toISOString().slice(0,10);
+      if(!taskMap[key]) taskMap[key]=[];
+      taskMap[key].push({t, isStart: key===t.start, isEnd: key===t.end});
+    }
   });
 
   const dow = ["日","月","火","水","木","金","土"];
@@ -1242,8 +1251,11 @@ function renderCalView(containerId, tasks){
     const dColor=dow2===0?'color:#ef4444;':dow2===6?'color:#3b82f6;':'';
     html+=`<div class="cal-cell${isToday?' today-cell':''}${dt.length?' has-tasks':''}">`;
     html+=`<span class="cal-date-num" style="${dColor}">${d}</span>`;
-    dt.forEach(t=>{
-      html+=`<span class="cal-chip" style="background:${taskChipColor(t.status)};" onclick="openTaskModal('${t.id}')" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</span>`;
+    dt.forEach(({t, isStart, isEnd})=>{
+      const color = taskChipColor(t.status);
+      const opacity = (!isStart && !isEnd) ? "opacity:.55;" : "";
+      const marker = isEnd ? '<span style="font-size:9px;margin-left:2px;">●</span>' : "";
+      html+=`<span class="cal-chip" style="background:${color};${opacity}" onclick="openTaskModal('${t.id}')" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}${marker}</span>`;
     });
     html+=`</div>`;
   }
