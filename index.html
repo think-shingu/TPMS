@@ -335,6 +335,17 @@
     border-radius:10px;
     box-shadow:0 2px 10px rgba(0,0,0,.15);
   }
+  .flow-toolbar-handle{
+    cursor:grab;
+    color:var(--muted);
+    font-size:16px;
+    padding:0 4px 0 2px;
+    user-select:none;
+    line-height:1;
+    border-right:1px solid var(--border);
+    margin-right:2px;
+  }
+  .flow-toolbar-handle:active{cursor:grabbing;}
   .flow-zoom-controls{
     display:flex;
     align-items:center;
@@ -691,6 +702,7 @@
       </div>
       <div class="flow-wrap" id="flowWrap">
         <div class="flow-toolbar-float" id="flowToolbarFloat">
+          <div class="flow-toolbar-handle" id="flowToolbarHandle" title="ドラッグして移動">⠿</div>
           <select id="flowProjectSelect" onchange="renderTaskFlow()"></select>
           <button class="btn secondary small" onclick="autoArrangeFlow()">🧭 自動整列</button>
           <button class="btn secondary small" onclick="toggleFlowFullscreen()" id="flowFullscreenBtn">⛶ 全画面表示</button>
@@ -1776,6 +1788,51 @@ function autoArrangeFlow(){
   showToast("自動整列しました");
 }
 
+/* ---- Toolbar drag ---- */
+let _tbDrag = null;
+
+function initToolbarDrag(){
+  const handle = document.getElementById("flowToolbarHandle");
+  if(!handle) return;
+  handle.addEventListener("mousedown", e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    const toolbar = document.getElementById("flowToolbarFloat");
+    const wrap    = document.getElementById("flowWrap");
+    if(!toolbar || !wrap) return;
+    const tr = toolbar.getBoundingClientRect();
+    const wr = wrap.getBoundingClientRect();
+    _tbDrag = {
+      toolbar, wrap,
+      offsetX: e.clientX - tr.left,
+      offsetY: e.clientY - tr.top
+    };
+    handle.style.cursor = "grabbing";
+    document.addEventListener("mousemove", _onTbMove);
+    document.addEventListener("mouseup",   _onTbUp);
+  });
+}
+
+function _onTbMove(e){
+  if(!_tbDrag) return;
+  const { toolbar, wrap, offsetX, offsetY } = _tbDrag;
+  const wr = wrap.getBoundingClientRect();
+  let x = e.clientX - wr.left - offsetX;
+  let y = e.clientY - wr.top  - offsetY;
+  x = Math.max(0, Math.min(x, wr.width  - toolbar.offsetWidth));
+  y = Math.max(0, Math.min(y, wr.height - toolbar.offsetHeight));
+  toolbar.style.left = x + "px";
+  toolbar.style.top  = y + "px";
+}
+
+function _onTbUp(){
+  if(!_tbDrag) return;
+  document.getElementById("flowToolbarHandle").style.cursor = "grab";
+  _tbDrag = null;
+  document.removeEventListener("mousemove", _onTbMove);
+  document.removeEventListener("mouseup",   _onTbUp);
+}
+
 /* ---- Task flow drag interactions (move nodes / draw connections) ---- */
 let flowDrag = null;
 let flowPositions = {};
@@ -2107,6 +2164,7 @@ function renderAll(){
 /* ---------------- Init ---------------- */
 window.addEventListener("DOMContentLoaded", ()=>{
   // イベントリスナーのセットアップ（データ不要）
+  initToolbarDrag();
   const flowSvgEl = document.getElementById("flowSvg");
   if(flowSvgEl) flowSvgEl.addEventListener("click", flowSvgClickHandler);
   document.addEventListener("keydown", handleFlowEscKey);
