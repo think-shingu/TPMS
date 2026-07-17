@@ -180,8 +180,23 @@
   .form-row input, .form-row select, .form-row textarea{width:100%;}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 
-  .gcal-frame{width:100%;height:700px;border:none;display:block;border-radius:var(--radius);}
-  @media(max-width:640px){.gcal-frame{height:500px;}}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-nav-btn{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:14px;color:var(--text);}
+  .cal-nav-btn:hover{background:#f1f5f9;}
+  .cal-month-label{font-size:17px;font-weight:700;}
+  .cal-grid-wrap{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);background:#f8fafc;border-bottom:1px solid var(--border);}
+  .cal-dow{padding:7px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);}
+  .cal-days{display:grid;grid-template-columns:repeat(7,1fr);}
+  .cal-cell{min-height:76px;padding:4px 4px 2px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:#fff;}
+  .cal-cell:nth-child(7n){border-right:none;}
+  .cal-cell.other-month{background:#fafafa;}
+  .cal-cell.today-cell{background:#eff6ff;}
+  .cal-date-num{font-size:11px;color:var(--muted);line-height:1.8;display:block;}
+  .cal-cell.today-cell .cal-date-num{background:var(--primary);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+  .cal-chip{font-size:10px;border-radius:3px;padding:1px 5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:block;color:#fff;line-height:1.7;}
+  .cal-chip:hover{opacity:.85;}
+  @media(max-width:640px){.cal-cell{min-height:48px;}.cal-chip{display:none;}.cal-cell.has-tasks::after{content:"●";font-size:8px;color:var(--primary);display:block;}}
 
   .member-avatar{
     width:34px;height:34px;border-radius:50%;
@@ -603,6 +618,7 @@
   <button class="tab-btn active" data-tab="myTasks" onclick="switchTab('myTasks')">自分のタスク</button>
   <button class="tab-btn" data-tab="projects" onclick="switchTab('projects')">自分のプロジェクト</button>
   <button class="tab-btn" data-tab="taskflow" onclick="switchTab('taskflow')">タスクフロー</button>
+  <button class="tab-btn" data-tab="memberCalendar" onclick="switchTab('memberCalendar')">カレンダー</button>
 </nav>
 
 <main>
@@ -665,15 +681,7 @@
 
   <!-- CALENDAR -->
   <section id="calendar" class="section manager-only">
-    <div class="card" style="padding:0;overflow:hidden;">
-      <iframe
-        class="gcal-frame"
-        src="https://calendar.google.com/calendar/embed?src=thinkshingu12.26%40gmail.com&ctz=Asia%2FTokyo&hl=ja"
-        title="Think新宮 Googleカレンダー"
-        frameborder="0"
-        scrolling="no">
-      </iframe>
-    </div>
+    <div id="managerCalContainer"></div>
   </section>
 
   <!-- MEMBERS -->
@@ -739,6 +747,11 @@
     <div style="display:flex;justify-content:flex-end;margin-top:16px;">
       <button class="btn secondary small" onclick="openMemberTaskModal()" style="opacity:.75;">＋ タスクを追加</button>
     </div>
+  </section>
+
+  <!-- MEMBER CALENDAR -->
+  <section id="memberCalendar" class="section member-only">
+    <div id="memberCalContainer"></div>
   </section>
 
   <!-- MANAGER AUTH -->
@@ -1129,10 +1142,84 @@ function exitViewerMode(){
 function switchTab(tab){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
   document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active", s.id===tab));
-  if(tab==="taskflow")    renderTaskFlow();
-  if(tab==="myTasks")     renderMyTasks();
-  if(tab==="projects")    renderProjects();
-  if(tab==="managerAuth") renderManagerAuth();
+  if(tab==="taskflow")       renderTaskFlow();
+  if(tab==="myTasks")        renderMyTasks();
+  if(tab==="projects")       renderProjects();
+  if(tab==="managerAuth")    renderManagerAuth();
+  if(tab==="calendar")       renderCalView("managerCalContainer", state.tasks);
+  if(tab==="memberCalendar") renderCalView("memberCalContainer",  memberCalTasks());
+}
+
+/* ---------------- Calendar ---------------- */
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function calPrevMonth(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendars(); }
+function calNextMonth(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendars(); }
+function renderCalendars(){
+  if(document.getElementById("managerCalContainer"))  renderCalView("managerCalContainer", state.tasks);
+  if(document.getElementById("memberCalContainer"))   renderCalView("memberCalContainer",  memberCalTasks());
+}
+function memberCalTasks(){
+  if(!currentMemberId) return [];
+  return state.tasks.filter(t=>t.assigneeId===currentMemberId);
+}
+function taskChipColor(status){
+  if(status==="完了")   return "#64748b";
+  if(status==="進行中") return "#2563eb";
+  return "#f59e0b";
+}
+function renderCalView(containerId, tasks){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+
+  const today = new Date();
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth+1, 0);
+  const startDow = firstDay.getDay();
+
+  const taskMap = {};
+  tasks.filter(t=>t.end).forEach(t=>{
+    if(!taskMap[t.end]) taskMap[t.end]=[];
+    taskMap[t.end].push(t);
+  });
+
+  const dow = ["日","月","火","水","木","金","土"];
+  let html = `<div class="cal-nav">
+    <button class="cal-nav-btn" onclick="calPrevMonth()">‹ 前月</button>
+    <span class="cal-month-label">${calYear}年${calMonth+1}月</span>
+    <button class="cal-nav-btn" onclick="calNextMonth()">次月 ›</button>
+  </div>
+  <div class="cal-grid-wrap">
+    <div class="cal-dow-row">
+      ${dow.map((d,i)=>`<div class="cal-dow" style="${i===0?'color:#ef4444':i===6?'color:#3b82f6':''}">${d}</div>`).join("")}
+    </div>
+    <div class="cal-days">`;
+
+  for(let i=0;i<startDow;i++){
+    const d=new Date(calYear,calMonth,i-startDow+1);
+    html+=`<div class="cal-cell other-month"><span class="cal-date-num">${d.getDate()}</span></div>`;
+  }
+  for(let d=1;d<=lastDay.getDate();d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+    const dt=taskMap[ds]||[];
+    const dow2=(startDow+d-1)%7;
+    const dColor=dow2===0?'color:#ef4444;':dow2===6?'color:#3b82f6;':'';
+    html+=`<div class="cal-cell${isToday?' today-cell':''}${dt.length?' has-tasks':''}">`;
+    html+=`<span class="cal-date-num" style="${dColor}">${d}</span>`;
+    dt.forEach(t=>{
+      html+=`<span class="cal-chip" style="background:${taskChipColor(t.status)};" onclick="openTaskModal('${t.id}')" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</span>`;
+    });
+    html+=`</div>`;
+  }
+  const total=startDow+lastDay.getDate();
+  const remain=(7-total%7)%7;
+  for(let i=1;i<=remain;i++){
+    html+=`<div class="cal-cell other-month"><span class="cal-date-num">${i}</span></div>`;
+  }
+  html+=`</div></div>`;
+  el.innerHTML=html;
 }
 
 /* ---------------- Manager Auth Management ---------------- */
@@ -2290,6 +2377,7 @@ function renderAll(){
   renderMembers();
   if(document.getElementById("taskflow").classList.contains("active")) renderTaskFlow();
   if(currentRole === "member") renderMyTasks();
+  renderCalendars();
 }
 
 /* ---------------- Init ---------------- */
