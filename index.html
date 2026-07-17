@@ -203,7 +203,6 @@
   .toast.show{opacity:1;transform:translateY(0);}
 
   .muted-text{color:var(--muted);font-size:12px;}
-  #fileInput{display:none;}
 
   @media (max-width:640px){
     main{padding:14px;}
@@ -578,9 +577,6 @@
   </div>
   <div class="actions">
     <span class="role-badge" id="roleBadge"></span>
-    <button class="manager-only" onclick="exportData()">💾 データを保存</button>
-    <button class="manager-only" onclick="document.getElementById('fileInput').click()">📂 データを読み込む</button>
-    <input type="file" id="fileInput" accept="application/json" onchange="importData(event)">
   </div>
 </header>
 
@@ -774,13 +770,6 @@
       <div class="muted-text">Ctrl/Cmdキーで複数選択。このタスクの前に完了しているべきタスクを選びます。</div>
     </div>
     <div class="form-row"><label>締切</label><input type="date" id="taskDeadline"></div>
-    <div class="form-row"><label>優先度</label>
-      <select id="taskPriority">
-        <option value="高">高</option>
-        <option value="中" selected>中</option>
-        <option value="低">低</option>
-      </select>
-    </div>
     <div class="form-row"><label>ステータス</label>
       <select id="taskStatus">
         <option value="未着手">未着手</option>
@@ -964,45 +953,6 @@ async function loadFromFirestore(){
   state.tasks    = tasks;
 }
 
-function exportData(){
-  const blob = new Blob([JSON.stringify(state, null, 2)], {type: "application/json"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const stamp = todayStr();
-  a.href = url;
-  a.download = `TPMS_data_${stamp}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast("データをファイルに保存しました");
-}
-
-function importData(event){
-  const file = event.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e){
-    try{
-      const parsed = JSON.parse(e.target.result);
-      if(!parsed.members || !parsed.projects || !parsed.tasks){
-        throw new Error("形式が不正です");
-      }
-      state = parsed;
-      renderAll();
-      Promise.all([
-        ...state.members.map(m => fsSet("members", m.id, m)),
-        ...state.projects.map(p => fsSet("projects", p.id, p)),
-        ...state.tasks.map(t => fsSet("tasks", t.id, t))
-      ]);
-      showToast("データを読み込みました（Firestoreへ同期中）");
-    }catch(err){
-      alert("読み込みに失敗しました: " + err.message);
-    }
-    event.target.value = "";
-  };
-  reader.readAsText(file);
-}
 
 /* ---------------- Roles ---------------- */
 function loadRoleState(){
@@ -1137,9 +1087,6 @@ function statusBadgeClass(status){
     case "未着手": return "notstarted";
     default: return "plan";
   }
-}
-function priorityClass(p){
-  return p==="高"?"high":p==="低"?"low":"mid";
 }
 function isOverdue(task){
   if(!task.deadline || task.status==="完了") return false;
@@ -1336,7 +1283,7 @@ function renderTasks(){
   }
   el.innerHTML = `
     <table>
-      <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>締切</th><th>優先度</th><th>ステータス</th><th></th></tr></thead>
+      <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>締切</th><th>ステータス</th><th></th></tr></thead>
       <tbody>
       ${list.map(t=>`
         <tr onclick="openTaskModal('${t.id}')" style="cursor:pointer;">
@@ -1344,7 +1291,6 @@ function renderTasks(){
           <td>${escapeHtml(projectName(t.projectId))}</td>
           <td>${escapeHtml(memberName(t.assigneeId))}</td>
           <td>${isOverdue(t) ? `<span class="badge overdue">${t.deadline||'-'}</span>` : (t.deadline||'-')}</td>
-          <td><span class="badge ${priorityClass(t.priority)}">${t.priority}</span></td>
           <td><span class="badge ${statusBadgeClass(t.status)}">${t.status}</span></td>
           <td><button class="btn small secondary" onclick="event.stopPropagation();openTaskModal('${t.id}')">編集</button></td>
         </tr>
@@ -1368,7 +1314,6 @@ function openTaskModal(id){
     document.getElementById("taskProject").value = t.projectId;
     document.getElementById("taskAssignee").value = t.assigneeId||"";
     document.getElementById("taskDeadline").value = t.deadline||"";
-    document.getElementById("taskPriority").value = t.priority;
     document.getElementById("taskStatus").value = t.status;
     document.getElementById("taskNotes").value = t.notes||"";
     refreshTaskDependsOnOptions();
@@ -1380,7 +1325,6 @@ function openTaskModal(id){
     document.getElementById("taskProject").value = "";
     document.getElementById("taskAssignee").value = "";
     document.getElementById("taskDeadline").value = "";
-    document.getElementById("taskPriority").value = "中";
     document.getElementById("taskStatus").value = "未着手";
     document.getElementById("taskNotes").value = "";
     refreshTaskDependsOnOptions();
@@ -1406,7 +1350,6 @@ function saveTask(){
     projectId: document.getElementById("taskProject").value,
     assigneeId: document.getElementById("taskAssignee").value,
     deadline: document.getElementById("taskDeadline").value,
-    priority: document.getElementById("taskPriority").value,
     status: document.getElementById("taskStatus").value,
     notes: document.getElementById("taskNotes").value.trim(),
     dependsOn
@@ -1559,7 +1502,7 @@ function renderMyTasks(){
       <div class="my-task-item ${overdue?'overdue-item':''} ${done?'done-item':''}">
         <div>
           <div class="title">${escapeHtml(t.title)}</div>
-          <div class="meta">${escapeHtml(projectName(t.projectId))} ・ 締切: ${t.deadline || "未設定"} ${overdue?'⚠️ 期限超過':''} ・ 優先度: ${escapeHtml(t.priority)}</div>
+          <div class="meta">${escapeHtml(projectName(t.projectId))} ・ 締切: ${t.deadline || "未設定"} ${overdue?'⚠️ 期限超過':''}</div>
         </div>
         <button class="check-btn ${done?'checked':''}" onclick="toggleMyTaskDone('${t.id}')">${done?'✓':''}</button>
       </div>
