@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<title>Think新宮プロジェクト管理システム</title>
+<title>TPMS - Think新宮プロジェクトマネジメントシステム</title>
 <style>
   :root{
     --primary:#2563eb;
@@ -144,6 +141,9 @@
   .badge.done{background:#dcfce7;color:#15803d;}
   .badge.hold{background:#fef3c7;color:#b45309;}
   .badge.notstarted{background:#f1f5f9;color:#475569;}
+  .badge.high{background:#fee2e2;color:#b91c1c;}
+  .badge.mid{background:#fef3c7;color:#b45309;}
+  .badge.low{background:#e0f2fe;color:#0369a1;}
   .badge.overdue{background:#fee2e2;color:#b91c1c;}
 
   .progress-bar{background:#e2e8f0;border-radius:999px;height:8px;width:100%;overflow:hidden;}
@@ -183,86 +183,6 @@
   .gcal-frame{width:100%;height:700px;border:none;display:block;border-radius:var(--radius);}
   @media(max-width:640px){.gcal-frame{height:500px;}}
 
-  /* ---- Custom Task Calendar ---- */
-  .cal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;font-weight:600;font-size:16px;}
-  .cal-header button{background:none;border:1px solid var(--border);border-radius:6px;padding:3px 14px;cursor:pointer;font-size:18px;color:var(--text);line-height:1.4;}
-  .cal-header button:hover{background:var(--bg);}
-  .cal-dow-row{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:var(--muted);padding:0 10px 4px;}
-  .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px 12px;}
-  .cal-day{
-    min-height:54px;
-    display:flex;flex-direction:column;align-items:center;
-    gap:3px;padding:4px 2px;
-    border-radius:8px;cursor:pointer;font-size:12px;
-    border:1px solid transparent;
-  }
-  .cal-day:hover{background:var(--bg);}
-  .cal-day.empty{cursor:default;}
-  .cal-day.empty:hover{background:none;}
-  .cal-day.selected{border-color:var(--primary);background:#eff6ff;}
-  .cal-day-num{
-    width:24px;height:24px;border-radius:50%;display:flex;
-    align-items:center;justify-content:center;font-size:12px;flex-shrink:0;
-  }
-  .cal-day.today .cal-day-num{background:var(--primary);color:#fff;font-weight:700;}
-  .cal-task-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;width:100%;}
-  .cal-dot{
-    font-size:9px;line-height:14px;padding:0 4px;border-radius:99px;
-    background:var(--primary);color:#fff;white-space:nowrap;max-width:100%;
-    overflow:hidden;text-overflow:ellipsis;
-  }
-  .cal-dot.overdue{background:#dc2626;color:#fff;}
-  .cal-dot.done{background:#15803d;color:#fff;}
-  .cal-dot.progress{background:#1d4ed8;color:#fff;}
-  .cal-dot.plan{background:#4338ca;color:#fff;}
-  .cal-dot.hold{background:#b45309;color:#fff;}
-  .cal-dot.notstarted{background:#94a3b8;color:#fff;}
-  .cal-day-panel{border-top:1px solid var(--border);padding:12px 16px;}
-  .cal-day-panel-title{font-weight:600;font-size:13px;color:var(--muted);margin-bottom:8px;}
-  .cal-task-item{
-    display:flex;align-items:center;gap:8px;padding:8px 10px;
-    border:1px solid var(--border);border-radius:8px;margin-bottom:6px;
-    cursor:pointer;font-size:13px;
-  }
-  .cal-task-item:hover{background:var(--bg);}
-  .cal-task-item:last-child{margin-bottom:0;}
-
-  /* PC: 2-column calendar layout */
-  .cal-layout{display:block;}
-  .cal-main{display:flex;flex-direction:column;}
-  @media(min-width:768px){
-    .cal-layout{display:flex;min-height:calc(100vh - 130px);}
-    .cal-main{flex:1;min-width:0;display:flex;flex-direction:column;}
-    .cal-days{flex:1;min-height:0;grid-auto-rows:1fr;padding-bottom:4px;}
-    .cal-day{min-height:0;}
-    .cal-dot{font-size:10px;line-height:15px;padding:0 5px;}
-    .cal-header{font-size:18px;padding:14px 20px 10px;}
-    .cal-dow-row{font-size:12px;padding:0 12px 6px;}
-    .cal-day-panel{
-      width:300px;flex-shrink:0;
-      border-top:none!important;border-left:1px solid var(--border);
-      overflow-y:auto;display:block!important;padding:20px 16px;
-    }
-    .cal-day-panel-title{font-size:14px;font-weight:700;margin-bottom:12px;}
-  }
-
-  /* ---- Notification Settings ---- */
-  .notif-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--border);}
-  .notif-row:last-of-type{border-bottom:none;padding-bottom:0;}
-  .notif-row-label{font-weight:600;font-size:14px;margin-bottom:4px;}
-  .notif-row-desc{font-size:12px;color:var(--muted);margin:0;}
-  .notif-check{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;padding:3px 0;}
-  .notif-check input{width:15px;height:15px;accent-color:var(--primary);cursor:pointer;}
-  .notif-timing-group{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:8px;}
-  .push-status-badge{display:inline-block;font-size:12px;padding:2px 10px;border-radius:99px;background:#f1f5f9;color:var(--muted);}
-  .push-status-badge.active{background:#dcfce7;color:#15803d;}
-
-  .project-member-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:28px;margin-bottom:8px;}
-  .project-member-tags:empty::before{content:"（未選択）";color:var(--muted);font-size:13px;line-height:28px;}
-  .member-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 10px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:99px;font-size:13px;}
-  .member-tag .tag-remove{background:none;border:none;cursor:pointer;color:#9ca3af;padding:0;font-size:15px;line-height:1;display:flex;align-items:center;}
-  .member-tag .tag-remove:hover{color:#dc2626;}
-  .member-add-select{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:var(--card);}
   .member-avatar{
     width:34px;height:34px;border-radius:50%;
     background:var(--primary);color:#fff;
@@ -325,6 +245,10 @@
   .role-choice button .sub{display:block;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px;}
   .role-choice button:hover{border-color:var(--primary);background:#eff6ff;}
   .role-choice button.selected{border-color:var(--primary);background:#eff6ff;}
+  .member-select-box{display:none;margin-top:14px;text-align:left;}
+  .member-select-box.show{display:block;}
+  .member-select-box select{width:100%;margin-bottom:10px;}
+  .member-select-box .btn{width:100%;}
 
   /* Role badge in header */
   .role-badge{
@@ -342,8 +266,6 @@
 
   body[data-role="manager"] .member-only{display:none !important;}
   body[data-role="member"] .manager-only{display:none !important;}
-  body[data-role="viewer"] .member-only{display:none !important;}
-  body[data-role="viewer"] .viewer-hide{display:none !important;}
   body:not([data-role]) .manager-only,
   body:not([data-role]) .member-only{display:none !important;}
 
@@ -400,12 +322,6 @@
     position:absolute;
     inset:0;
     overflow:auto;
-    background-color:#fff;
-    background-image:
-      linear-gradient(rgba(37,99,235,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(37,99,235,.05) 1px, transparent 1px);
-    background-size:20px 20px;
-    background-attachment:local;
   }
   .flow-toolbar-float{
     position:absolute;
@@ -440,7 +356,11 @@
   }
   .flow-canvas{
     position:relative;
-    background-color:transparent;
+    background-color:#fff;
+    background-image:
+      linear-gradient(rgba(37,99,235,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,99,235,.05) 1px, transparent 1px);
+    background-size:20px 20px;
   }
   .flow-canvas svg{position:absolute;top:0;left:0;pointer-events:none;}
   .flow-wrap .empty{color:var(--muted);padding:50px 20px;}
@@ -566,22 +486,30 @@
   .google-user-card .g-name{font-weight:600;font-size:14px;}
   .google-user-card .g-email{font-size:12px;color:var(--muted);}
   .signout-link{font-size:12px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;padding:0;margin-top:10px;}
-  .header-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.5);vertical-align:middle;margin-right:4px;cursor:pointer;transition:opacity .2s;}
-  .header-avatar:hover{opacity:.7;}
-  .header-avatar-placeholder{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;vertical-align:middle;margin-right:4px;cursor:pointer;transition:opacity .2s;}
-  .header-avatar-placeholder:hover{opacity:.7;}
+  .header-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.5);vertical-align:middle;margin-right:4px;}
+  .header-avatar-placeholder{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;vertical-align:middle;margin-right:4px;}
   .loading-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;z-index:400;flex-direction:column;gap:16px;}
   .loading-overlay.hidden{display:none;}
   .loading-spinner{width:42px;height:42px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
   .loading-overlay p{color:#fff;font-size:14px;margin:0;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  #gis-signin-btn{display:flex;justify-content:center;}
+  .google-signin-btn{
+    display:flex;align-items:center;gap:10px;
+    background:#fff;color:#3c4043;
+    border:1px solid #dadce0;border-radius:4px;
+    padding:10px 20px;font-size:14px;font-weight:500;
+    cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+    margin:0 auto;
+    transition:box-shadow .2s;
+  }
+  .google-signin-btn:hover{box-shadow:0 2px 8px rgba(0,0,0,.15);}
+  .google-signin-btn svg{flex-shrink:0;}
 </style>
 <!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
-<script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
 
@@ -592,14 +520,17 @@
 
 <div class="role-gate hidden" id="roleGate">
   <div class="role-gate-card">
-    <h2>Think新宮プロジェクト管理システムへようこそ</h2>
-    <p class="sub">Think新宮プロジェクト管理システム</p>
+    <h2>TPMSへようこそ</h2>
+    <p class="sub">Think新宮プロジェクトマネジメントシステム</p>
 
     <!-- Step 1: Google Sign-In -->
     <div id="authStep" class="auth-step">
       <p>続行するにはGoogleアカウントでサインインしてください。</p>
       <div class="g-sign-btn-wrap">
-        <div id="gis-signin-btn"></div>
+        <button class="google-signin-btn" onclick="signInWithGoogle()">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 6.294C4.672 4.169 6.656 3.58 9 3.58z"/></svg>
+          Googleでサインイン
+        </button>
       </div>
     </div>
 
@@ -629,6 +560,10 @@
           <span class="sub">自分がやるべきタスクだけをシンプルに確認</span>
         </button>
       </div>
+      <div class="member-select-box" id="memberSelectBox">
+        <select id="roleMemberSelect"></select>
+        <button class="btn" onclick="confirmMemberRole()">この人として開始</button>
+      </div>
       <div style="text-align:center;margin-top:12px;">
         <button class="signout-link" onclick="signOutGoogle()">別のアカウントでサインイン</button>
       </div>
@@ -638,11 +573,14 @@
 
 <header>
   <div class="brand">
-    <h1>Think新宮</h1>
-    <p>プロジェクト管理システム</p>
+    <h1>TPMS</h1>
+    <p>Think新宮プロジェクトマネジメントシステム</p>
   </div>
   <div class="actions">
     <span class="role-badge" id="roleBadge"></span>
+    <button class="manager-only" onclick="exportData()">💾 データを保存</button>
+    <button class="manager-only" onclick="document.getElementById('fileInput').click()">📂 データを読み込む</button>
+    <input type="file" id="fileInput" accept="application/json" onchange="importData(event)">
   </div>
 </header>
 
@@ -653,7 +591,6 @@
   <button class="tab-btn" data-tab="taskflow" onclick="switchTab('taskflow')">タスクフロー</button>
   <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')">カレンダー</button>
   <button class="tab-btn" data-tab="members" onclick="switchTab('members')">メンバー</button>
-  <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')" style="margin-left:auto;color:var(--muted);">⚙ 設定</button>
 </nav>
 
 <main>
@@ -691,7 +628,7 @@
           <option value="保留">保留</option>
         </select>
       </div>
-      <button class="btn viewer-hide" onclick="openProjectModal()">＋ 新規プロジェクト</button>
+      <button class="btn" onclick="openProjectModal()">＋ 新規プロジェクト</button>
     </div>
     <div id="projectList"></div>
   </section>
@@ -709,7 +646,7 @@
           <option value="完了">完了</option>
         </select>
       </div>
-      <button class="btn viewer-hide" onclick="openTaskModal()">＋ 新規タスク</button>
+      <button class="btn" onclick="openTaskModal()">＋ 新規タスク</button>
     </div>
     <div id="taskList"></div>
   </section>
@@ -717,77 +654,23 @@
   <!-- CALENDAR -->
   <section id="calendar" class="section manager-only">
     <div class="card" style="padding:0;overflow:hidden;">
-      <div class="cal-layout">
-        <div class="cal-main">
-          <div class="cal-header">
-            <button onclick="calPrevMonth()">‹</button>
-            <span id="calMonthLabel"></span>
-            <button onclick="calNextMonth()">›</button>
-          </div>
-          <div class="cal-dow-row">
-            <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
-          </div>
-          <div class="cal-days" id="calGrid"></div>
-        </div>
-        <div id="calDayPanel" style="display:none;" class="cal-day-panel">
-          <div class="cal-day-panel-title" id="calDayPanelTitle"></div>
-          <div id="calDayTaskList"></div>
-        </div>
-      </div>
+      <iframe
+        class="gcal-frame"
+        src="https://calendar.google.com/calendar/embed?src=thinkshingu12.26%40gmail.com&ctz=Asia%2FTokyo&hl=ja"
+        title="Think新宮 Googleカレンダー"
+        frameborder="0"
+        scrolling="no">
+      </iframe>
     </div>
   </section>
 
   <!-- MEMBERS -->
   <section id="members" class="section manager-only">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" onclick="openMemberModal()">＋ 新規メンバー</button>
+    </div>
     <div id="memberList"></div>
-  </section>
-
-  <!-- SETTINGS -->
-  <section id="settings" class="section manager-only">
-    <!-- 通知設定 -->
-    <div class="card" style="margin-bottom:16px;">
-      <h3 style="margin-top:0;">通知設定</h3>
-
-      <!-- ブラウザ Push -->
-      <div class="notif-row">
-        <div>
-          <div class="notif-row-label">ブラウザ通知</div>
-          <p class="notif-row-desc">アプリを開いたとき、締切・割当・ステータス変更を通知します。</p>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-          <span class="push-status-badge" id="pushStatusBadge">未設定</span>
-          <button class="btn secondary small" onclick="registerPushNotifications()">有効にする</button>
-        </div>
-      </div>
-
-      <!-- タイミング -->
-      <div class="notif-row" style="flex-direction:column;">
-        <div class="notif-row-label">通知タイミング</div>
-        <label class="notif-check" style="margin-top:10px;"><input type="checkbox" id="notifyOnAssigned"> タスクが自分に割り当てられたとき</label>
-        <label class="notif-check"><input type="checkbox" id="notifyOnStatus"> タスクのステータスが変更されたとき</label>
-        <div style="margin-top:12px;">
-          <div style="font-size:13px;font-weight:600;margin-bottom:6px;">締切通知（アプリを開いたとき）</div>
-          <div class="notif-timing-group">
-            <label class="notif-check"><input type="checkbox" id="notifyDay3"> 3日前</label>
-            <label class="notif-check"><input type="checkbox" id="notifyDay2"> 2日前</label>
-            <label class="notif-check"><input type="checkbox" id="notifyDay1"> 1日前</label>
-            <label class="notif-check"><input type="checkbox" id="notifyDay0"> 当日</label>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn" style="margin-top:4px;" onclick="saveNotificationSettings()">設定を保存</button>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-top:0;">マネージャー認証アカウント</h3>
-      <p class="muted-text" style="margin-bottom:16px;">ここに登録されたメールアドレスのみ、ログイン時にマネージャーを選択できます。</p>
-      <div class="toolbar">
-        <div></div>
-        <button class="btn" onclick="openAddManagerModal()">＋ アカウントを追加</button>
-      </div>
-      <div id="authorizedManagerList"></div>
-    </div>
   </section>
 
   <!-- TASK FLOW (manager) -->
@@ -807,7 +690,7 @@
       <div class="flow-wrap" id="flowWrap">
         <div class="flow-toolbar-float" id="flowToolbarFloat">
           <select id="flowProjectSelect" onchange="renderTaskFlow()"></select>
-          <button class="btn secondary small viewer-hide" onclick="autoArrangeFlow()">🧭 自動整列</button>
+          <button class="btn secondary small" onclick="autoArrangeFlow()">🧭 自動整列</button>
           <button class="btn secondary small" onclick="toggleFlowFullscreen()" id="flowFullscreenBtn">⛶ 全画面表示</button>
           <div class="flow-zoom-controls">
             <button class="btn secondary small" onclick="flowZoomOut()" title="縮小">－</button>
@@ -840,8 +723,7 @@
       <button data-mytab="done" onclick="switchMyTab('done')">完了済み</button>
     </div>
     <div id="myTaskList"></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
-      <button class="btn secondary small" onclick="registerPushNotifications()" style="opacity:.75;" id="memberPushBtn">🔔 通知を有効にする</button>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
       <button class="btn secondary small" onclick="openMemberTaskModal()" style="opacity:.75;">＋ タスクを追加</button>
     </div>
   </section>
@@ -865,13 +747,7 @@
     </div>
     <div class="form-row"><label>開始日</label><input type="date" id="projectStart"></div>
     <div class="form-row"><label>締切日</label><input type="date" id="projectEnd"></div>
-    <div class="form-row">
-      <label>参加メンバー</label>
-      <div class="project-member-tags" id="projectMemberTags"></div>
-      <select class="member-add-select" id="projectMemberAdd" onchange="addProjectMember(this.value)">
-        <option value="">＋ メンバーを追加...</option>
-      </select>
-    </div>
+    <div class="form-row"><label>参加メンバー</label><select id="projectMembers" multiple size="4"></select></div>
     <div class="modal-actions">
       <button class="btn danger" id="projectDeleteBtn" onclick="deleteProject()" style="display:none;">削除</button>
       <button class="btn secondary" onclick="closeModal('projectModalOverlay')">キャンセル</button>
@@ -897,7 +773,14 @@
       <select id="taskDependsOn" multiple size="4"></select>
       <div class="muted-text">Ctrl/Cmdキーで複数選択。このタスクの前に完了しているべきタスクを選びます。</div>
     </div>
-    <div class="form-row"><label>締切</label><input type="date" id="taskDeadline" onchange="_updateCalAddBtn()"></div>
+    <div class="form-row"><label>締切</label><input type="date" id="taskDeadline"></div>
+    <div class="form-row"><label>優先度</label>
+      <select id="taskPriority">
+        <option value="高">高</option>
+        <option value="中" selected>中</option>
+        <option value="低">低</option>
+      </select>
+    </div>
     <div class="form-row"><label>ステータス</label>
       <select id="taskStatus">
         <option value="未着手">未着手</option>
@@ -909,21 +792,23 @@
     <div class="modal-actions">
       <button class="btn danger" id="taskDeleteBtn" onclick="deleteTask()" style="display:none;">削除</button>
       <button class="btn secondary" onclick="closeModal('taskModalOverlay')">キャンセル</button>
-      <button class="btn secondary" id="taskCalAddBtn" onclick="addToGoogleCalendarFromModal()" style="display:none;">📅 Googleカレンダーに追加</button>
       <button class="btn" onclick="saveTask()">保存</button>
     </div>
   </div>
 </div>
 
 <!-- MEMBER MODAL -->
-<!-- ADD MANAGER MODAL -->
-<div class="modal-overlay" id="addManagerModalOverlay">
+<div class="modal-overlay" id="memberModalOverlay">
   <div class="modal">
-    <h3>マネージャーアカウントを追加</h3>
-    <div class="form-row"><label>メールアドレス</label><input type="email" id="newManagerEmail" placeholder="example@gmail.com"></div>
+    <h3 id="memberModalTitle">新規メンバー</h3>
+    <input type="hidden" id="memberId">
+    <div class="form-row"><label>名前</label><input type="text" id="memberName"></div>
+    <div class="form-row"><label>役割</label><input type="text" id="memberRole" placeholder="例: 代表, 広報, 会計"></div>
+    <div class="form-row"><label>メールアドレス</label><input type="email" id="memberEmail"></div>
     <div class="modal-actions">
-      <button class="btn secondary" onclick="closeModal('addManagerModalOverlay')">キャンセル</button>
-      <button class="btn" onclick="saveAuthorizedManager()">追加</button>
+      <button class="btn danger" id="memberDeleteBtn" onclick="deleteMember()" style="display:none;">削除</button>
+      <button class="btn secondary" onclick="closeModal('memberModalOverlay')">キャンセル</button>
+      <button class="btn" onclick="saveMember()">保存</button>
     </div>
   </div>
 </div>
@@ -942,27 +827,6 @@ let currentMemberId = null;
 let myTaskFilter = "pending";
 
 const ROLE_KEY = "tpms_role_v1";
-const MANAGER_EMAIL = "haru84148@gmail.com"; // bootstrap用初期管理者
-
-let authorizedManagers = []; // [{id, email}]
-
-function isAuthorizedManager(email){
-  return authorizedManagers.some(m => m.email.toLowerCase() === email.toLowerCase());
-}
-
-async function loadAuthorizedManagers(){
-  try{
-    const snap = await fbDb.ref("settings/authorizedManagers").once("value");
-    const val = snap.val();
-    authorizedManagers = val ? Object.entries(val).map(([id,d]) => ({id, email: d.email})) : [];
-    // 初回起動時のみ初期管理者を自動登録
-    if(authorizedManagers.length === 0){
-      const ref = fbDb.ref("settings/authorizedManagers").push();
-      await ref.set({email: MANAGER_EMAIL.toLowerCase()});
-      authorizedManagers = [{id: ref.key, email: MANAGER_EMAIL.toLowerCase()}];
-    }
-  }catch(e){ console.error("Failed to load authorized managers", e); }
-}
 
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyDWwC3PuGH0L5dFgKzhI0Or00GbJcR-bSI",
@@ -1001,241 +865,18 @@ async function fsGetAll(col){
 }
 
 /* ---------------- Firebase Auth ---------------- */
-const GCAL_TOKEN_KEY = "tpms_gcal_token";
-const GCAL_TOKEN_EXP_KEY = "tpms_gcal_token_exp";
-let _gcalToken = null;
-
-function _storeGcalToken(token){
-  _gcalToken = token;
+async function signInWithGoogle(){
   try{
-    sessionStorage.setItem(GCAL_TOKEN_KEY, token);
-    sessionStorage.setItem(GCAL_TOKEN_EXP_KEY, Date.now() + 55 * 60 * 1000); // 55分
-  }catch(e){}
-}
-
-function _getGcalToken(){
-  if(_gcalToken) return _gcalToken;
-  try{
-    const exp = parseInt(sessionStorage.getItem(GCAL_TOKEN_EXP_KEY) || "0");
-    if(Date.now() < exp){
-      _gcalToken = sessionStorage.getItem(GCAL_TOKEN_KEY);
-      return _gcalToken;
-    }
-    sessionStorage.removeItem(GCAL_TOKEN_KEY);
-    sessionStorage.removeItem(GCAL_TOKEN_EXP_KEY);
-  }catch(e){}
-  return null;
-}
-
-async function gcalSyncTask(rec, action){
-  const token = _getGcalToken();
-  if(!token) return;
-  const calId = "primary";
-  const base = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`;
-  try{
-    if(action === "delete"){
-      if(!rec.gcalEventId) return;
-      await fetch(`${base}/${rec.gcalEventId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      return;
-    }
-    if(!rec.deadline) return;
-    const endDate = new Date(rec.deadline + "T00:00:00");
-    endDate.setDate(endDate.getDate() + 1);
-    const body = {
-      summary: rec.title,
-      description: [rec.notes, rec.assigneeId ? `担当: ${memberName(rec.assigneeId)}` : ""].filter(Boolean).join("\n"),
-      start: { date: rec.deadline },
-      end: { date: endDate.toISOString().slice(0, 10) }
-    };
-    let res;
-    if(action === "update" && rec.gcalEventId){
-      res = await fetch(`${base}/${rec.gcalEventId}`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-    } else {
-      res = await fetch(base, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
-    }
-    if(res.ok){
-      const ev = await res.json();
-      if(ev.id && ev.id !== rec.gcalEventId){
-        rec.gcalEventId = ev.id;
-        fsSet("tasks", rec.id, rec);
-      }
-    } else if(res.status === 401){
-      _gcalToken = null;
-      try{ sessionStorage.removeItem(GCAL_TOKEN_KEY); }catch(e){}
-    }
-  }catch(e){ console.warn("Calendar sync error:", e); }
-}
-
-const GIS_CLIENT_ID = "407404219726-f59o78jqglu49qa46gc4efhkdumo8dnm.apps.googleusercontent.com";
-let _gisInitialized = false;
-let _gisSigningIn = false;
-
-async function _handleGISCredential(response){
-  if(_gisSigningIn) return;
-  _gisSigningIn = true;
-  try{
-    const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
-    await fbAuth.signInWithCredential(credential);
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await fbAuth.signInWithPopup(provider);
   }catch(e){
-    console.error("GIS signInWithCredential error:", e.code, e.message);
-    alert("サインインに失敗しました: " + e.message);
-  }finally{
-    _gisSigningIn = false;
+    if(e.code !== "auth/popup-closed-by-user") alert("サインインに失敗しました: " + e.message);
   }
 }
-
-function _initGIS(){
-  if(_gisInitialized) return;
-  if(typeof google === "undefined" || !google.accounts){
-    setTimeout(_initGIS, 100);
-    return;
-  }
-  _gisInitialized = true;
-  google.accounts.id.initialize({
-    client_id: GIS_CLIENT_ID,
-    callback: _handleGISCredential,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-    use_fedcm_for_prompt: true
-  });
-  const el = document.getElementById("gis-signin-btn");
-  if(el) google.accounts.id.renderButton(el, {
-    theme: "outline",
-    size: "large",
-    text: "signin_with",
-    shape: "rectangular",
-    width: 280
-  });
-}
-
-/* ──────────── Push / Notification ──────────── */
-
-async function registerPushNotifications(){
-  if(!('Notification' in window)){
-    alert('このブラウザはブラウザ通知に対応していません。');
-    return;
-  }
-  const perm = await Notification.requestPermission();
-  if(perm !== 'granted'){
-    alert('通知が拒否されました。ブラウザの設定から「許可」に変更してください。');
-    return;
-  }
-  _updatePushStatusBadge(true);
-  showToast('ブラウザ通知を有効にしました');
-}
-
-function _updatePushStatusBadge(force){
-  const active = force !== undefined ? force : (Notification.permission === 'granted');
-  const badge = document.getElementById('pushStatusBadge');
-  if(badge){ badge.textContent = active ? '✅ 有効' : '未設定'; badge.className = 'push-status-badge' + (active ? ' active' : ''); }
-  const mBtn = document.getElementById('memberPushBtn');
-  if(mBtn) mBtn.textContent = active ? '🔔 通知有効中' : '🔔 通知を有効にする';
-}
-
-async function loadNotificationSettings(){
-  _updatePushStatusBadge(Notification.permission === 'granted');
-  try{
-    const snap = await fbDb.ref('notificationSettings').once('value');
-    const s = snap.val() || {};
-    const days = s.deadlineDays || [];
-    [0,1,2,3].forEach(d => {
-      const el = document.getElementById(`notifyDay${d}`);
-      if(el) el.checked = days.includes(d);
-    });
-    const onA = document.getElementById('notifyOnAssigned');
-    const onS = document.getElementById('notifyOnStatus');
-    if(onA) onA.checked = !!s.onAssigned;
-    if(onS) onS.checked = !!s.onStatusChange;
-    const wu = document.getElementById('discordWebhookUrl');
-    if(wu) wu.value = s.discordWebhookUrl || '';
-  }catch(e){ console.warn('通知設定の読込失敗', e); }
-}
-
-async function saveNotificationSettings(){
-  const days = [0,1,2,3].filter(d => document.getElementById(`notifyDay${d}`)?.checked);
-  const settings = {
-    deadlineDays: days,
-    onAssigned: !!document.getElementById('notifyOnAssigned')?.checked,
-    onStatusChange: !!document.getElementById('notifyOnStatus')?.checked
-  };
-  await fbDb.ref(`notificationSettings`).set(settings);
-  showToast('通知設定を保存しました');
-}
-
-// アプリ起動時に締切タスクをチェックして通知
-async function checkDeadlineNotifications(){
-  if(Notification.permission !== 'granted') return;
-  try{
-    const snap = await fbDb.ref('notificationSettings').once('value');
-    const s = snap.val() || {};
-    const days = s.deadlineDays ?? [0, 1];
-    if(days.length === 0) return;
-    const today = new Date(); today.setHours(0,0,0,0);
-    // 本日通知済みか確認
-    const sentKey = `sentNotifications/${todayStr()}/_deadline_check_${currentGoogleUser?.uid||'anon'}`;
-    const sent = await fbDb.ref(sentKey).once('value');
-    if(sent.exists()) return;
-    const targets = state.tasks.filter(t => {
-      if(!t.deadline || t.status === '完了') return false;
-      if(currentRole === 'member' && t.assigneeId !== currentMemberId) return false;
-      const dl = new Date(t.deadline + 'T00:00:00');
-      const diff = Math.round((dl - today) / 86400000);
-      return days.includes(diff);
-    });
-    if(targets.length === 0) return;
-    await fbDb.ref(sentKey).set(true);
-    targets.forEach(t => {
-      const dl = new Date(t.deadline + 'T00:00:00');
-      const diff = Math.round((dl - today) / 86400000);
-      const label = diff === 0 ? '本日締切' : `${diff}日後に締切`;
-      new Notification(`⏰ ${label}: ${t.title}`, { body: `締切: ${t.deadline}`, tag: `deadline_${t.id}` });
-    });
-  }catch(e){ console.warn('締切通知チェック失敗', e); }
-}
-
-// タスク変更時の通知（saveTask から呼ぶ）
-async function _notifyTaskChange(oldTask, newTask){
-  if(Notification.permission !== 'granted') return;
-  try{
-    const snap = await fbDb.ref('notificationSettings').once('value');
-    const s = snap.val() || {};
-    // 担当者変更
-    if(s.onAssigned && newTask.assigneeId && newTask.assigneeId !== oldTask?.assigneeId){
-      if(currentRole === 'member' && newTask.assigneeId === currentMemberId){
-        new Notification('📋 タスクが割り当てられました', { body: newTask.title, tag: `assigned_${newTask.id}` });
-      }
-    }
-    // ステータス変更
-    if(s.onStatusChange && oldTask && newTask.status !== oldTask.status){
-      if(currentRole === 'member' && newTask.assigneeId === currentMemberId){
-        new Notification(`🔄 ステータス変更: ${newTask.title}`, { body: `${oldTask.status} → ${newTask.status}`, tag: `status_${newTask.id}` });
-      }
-    }
-  }catch(e){}
-}
-
-/* ─────────────────────────────────────────────── */
 
 async function signOutGoogle(){
-  try{
-    if(typeof google !== "undefined" && google.accounts){
-      google.accounts.id.disableAutoSelect();
-    }
-  }catch(e){}
   try{ await fbAuth.signOut(); }catch(e){ console.warn(e); }
   try{ localStorage.removeItem(ROLE_KEY); }catch(e){ console.warn(e); }
-  _gisSigningIn = false;
   currentGoogleUser = null;
   currentUserName   = null;
   currentRole = null;
@@ -1268,8 +909,7 @@ async function submitUserName(){
   if(!lastName || !firstName){ alert("性と名の両方を入力してください"); return; }
   await _saveUserName(currentGoogleUser.uid, lastName, firstName);
   currentUserName = {lastName, firstName};
-  const isManagerUser = currentGoogleUser && isAuthorizedManager(currentGoogleUser.email);
-  if(isManagerUser){ _showRoleStep(); } else { await _loginAsMember(); }
+  _showRoleStep();
 }
 
 function _renderGoogleUserCard(){
@@ -1290,39 +930,15 @@ function _showRoleStep(){
   document.getElementById("nameStep").style.display = "none";
   document.getElementById("roleStep").style.display = "";
   _renderGoogleUserCard();
-  document.getElementById("chooseManagerBtn").style.display = "";
-}
-
-async function _loginAsMember(){
-  if(!currentUserName){ _showNameStep(); return; }
-  let matched = null;
-  // メールで照合
   if(currentGoogleUser && currentGoogleUser.email){
-    matched = state.members.find(m => m.email && m.email.toLowerCase() === currentGoogleUser.email.toLowerCase());
+    const matched = state.members.find(m => m.email && m.email.toLowerCase() === currentGoogleUser.email.toLowerCase());
+    if(matched){
+      saveRoleState("member", matched.id);
+      applyRole("member", matched.id);
+      hideRoleGate();
+      showToast(`${matched.name}さんとしてサインインしました`);
+    }
   }
-  // 姓名で照合
-  if(!matched){
-    const full = `${currentUserName.lastName} ${currentUserName.firstName}`;
-    matched = state.members.find(m => m.name === full);
-  }
-  // 一致なし → メンバーを自動作成
-  if(!matched){
-    const newMember = {
-      id: uid(),
-      name: `${currentUserName.lastName} ${currentUserName.firstName}`,
-      role: "",
-      email: (currentGoogleUser && currentGoogleUser.email) || ""
-    };
-    state.members.push(newMember);
-    await fsSet("members", newMember.id, newMember);
-    renderAll();
-    matched = newMember;
-  }
-  saveRoleState("member", matched.id);
-  applyRole("member", matched.id);
-  hideRoleGate();
-  showToast(`${matched.name}さんとしてログインしました`);
-  checkDeadlineNotifications();
 }
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -1346,9 +962,47 @@ async function loadFromFirestore(){
   state.members = members;
   state.projects = projects;
   state.tasks    = tasks;
-  await loadAuthorizedManagers();
 }
 
+function exportData(){
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = todayStr();
+  a.href = url;
+  a.download = `TPMS_data_${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("データをファイルに保存しました");
+}
+
+function importData(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!parsed.members || !parsed.projects || !parsed.tasks){
+        throw new Error("形式が不正です");
+      }
+      state = parsed;
+      renderAll();
+      Promise.all([
+        ...state.members.map(m => fsSet("members", m.id, m)),
+        ...state.projects.map(p => fsSet("projects", p.id, p)),
+        ...state.tasks.map(t => fsSet("tasks", t.id, t))
+      ]);
+      showToast("データを読み込みました（Firestoreへ同期中）");
+    }catch(err){
+      alert("読み込みに失敗しました: " + err.message);
+    }
+    event.target.value = "";
+  };
+  reader.readAsText(file);
+}
 
 /* ---------------- Roles ---------------- */
 function loadRoleState(){
@@ -1362,29 +1016,45 @@ function saveRoleState(role, memberId){
   try{ localStorage.setItem(ROLE_KEY, JSON.stringify({role, memberId: memberId||null})); }catch(e){ console.warn(e); }
 }
 
-async function chooseRole(role){
+function chooseRole(role){
   if(role === "manager"){
-    if(!currentGoogleUser || !isAuthorizedManager(currentGoogleUser.email)){
-      alert("マネージャーモードへのアクセス権限がありません。");
-      return;
-    }
     document.getElementById("chooseManagerBtn").classList.add("selected");
     document.getElementById("chooseMemberBtn").classList.remove("selected");
+    document.getElementById("memberSelectBox").classList.remove("show");
     saveRoleState("manager", null);
     applyRole("manager", null);
     hideRoleGate();
-    checkDeadlineNotifications();
   }else{
     document.getElementById("chooseMemberBtn").classList.add("selected");
     document.getElementById("chooseManagerBtn").classList.remove("selected");
-    await _loginAsMember();
+    populateRoleMemberSelect();
+    document.getElementById("memberSelectBox").classList.add("show");
   }
+}
+
+function populateRoleMemberSelect(){
+  const sel = document.getElementById("roleMemberSelect");
+  if(state.members.length === 0){
+    sel.innerHTML = `<option value="">先にマネージャーがメンバーを登録してください</option>`;
+    return;
+  }
+  sel.innerHTML = state.members.map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
+}
+
+function confirmMemberRole(){
+  const sel = document.getElementById("roleMemberSelect");
+  const memberId = sel.value;
+  if(!memberId){ alert("メンバーを選択してください"); return; }
+  saveRoleState("member", memberId);
+  applyRole("member", memberId);
+  hideRoleGate();
 }
 
 function hideRoleGate(){ document.getElementById("roleGate").classList.add("hidden"); }
 function showRoleGate(){
   document.getElementById("chooseManagerBtn").classList.remove("selected");
   document.getElementById("chooseMemberBtn").classList.remove("selected");
+  document.getElementById("memberSelectBox").classList.remove("show");
   if(currentGoogleUser){
     document.getElementById("authStep").style.display = "none";
     if(!currentUserName){
@@ -1393,8 +1063,6 @@ function showRoleGate(){
       document.getElementById("nameStep").style.display = "none";
       document.getElementById("roleStep").style.display = "";
       _renderGoogleUserCard();
-      const isManagerUser = isAuthorizedManager(currentGoogleUser.email);
-      document.getElementById("chooseManagerBtn").style.display = isManagerUser ? "" : "none";
     }
   } else {
     document.getElementById("authStep").style.display = "";
@@ -1404,39 +1072,26 @@ function showRoleGate(){
   document.getElementById("roleGate").classList.remove("hidden");
 }
 
-function _confirmSignOut(){
-  if(confirm("サインイン画面に戻りますか？")) signOutGoogle();
-}
-
-function _buildAvatarHtml(){
-  if(!currentGoogleUser) return "";
-  const tip = "タップしてアカウントを変更";
-  return currentGoogleUser.picture
-    ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="" title="${tip}" onclick="_confirmSignOut()">`
-    : `<span class="header-avatar-placeholder" title="${tip}" onclick="_confirmSignOut()">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
-}
-
 function applyRole(role, memberId){
   currentRole = role;
   currentMemberId = memberId;
   document.body.dataset.role = role;
   const badge = document.getElementById("roleBadge");
-  const avatarHtml = _buildAvatarHtml();
+  let avatarHtml = "";
+  if(currentGoogleUser){
+    avatarHtml = currentGoogleUser.picture
+      ? `<img src="${escapeHtml(currentGoogleUser.picture)}" class="header-avatar" alt="">`
+      : `<span class="header-avatar-placeholder">${escapeHtml((currentGoogleUser.name||"?").charAt(0).toUpperCase())}</span>`;
+  }
   const storedName = currentUserName
     ? `${currentUserName.lastName} ${currentUserName.firstName}`
     : (currentGoogleUser ? currentGoogleUser.name : "");
   if(role === "manager"){
     badge.innerHTML = `${avatarHtml}${escapeHtml(storedName)}（マネージャー） <button onclick="switchRole()">切り替え</button>`;
     switchTab("dashboard");
-  }else if(role === "viewer"){
-    badge.innerHTML = `${avatarHtml}${escapeHtml(storedName)}（閲覧モード） <button onclick="exitViewerMode()">メンバー画面に戻る</button>`;
-    switchTab("dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
-    const isManagerEmail = currentGoogleUser && isAuthorizedManager(currentGoogleUser.email);
-    const viewerBtn = isManagerEmail ? "" : ` <button onclick="enterViewerMode()">管理画面を閲覧</button>`;
-    const switchBtn = isManagerEmail ? ` <button onclick="switchRole()">切り替え</button>` : "";
-    badge.innerHTML = `${avatarHtml}${escapeHtml(m ? m.name : "メンバー")}さん${viewerBtn}${switchBtn}`;
+    badge.innerHTML = `${avatarHtml}${escapeHtml(m ? m.name : "メンバー")}さん <button onclick="switchRole()">切り替え</button>`;
     document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
     document.getElementById("myTasks").classList.add("active");
     renderMyTasks();
@@ -1445,121 +1100,11 @@ function applyRole(role, memberId){
 
 function switchRole(){ showRoleGate(); }
 
-function enterViewerMode(){
-  currentRole = "viewer";
-  document.body.dataset.role = "viewer";
-  const storedName = currentUserName
-    ? `${currentUserName.lastName} ${currentUserName.firstName}`
-    : (currentGoogleUser ? currentGoogleUser.name : "");
-  const avatarHtml = _buildAvatarHtml();
-  document.getElementById("roleBadge").innerHTML =
-    `${avatarHtml}${escapeHtml(storedName)}（閲覧モード） <button onclick="exitViewerMode()">メンバー画面に戻る</button>`;
-  switchTab("dashboard");
-}
-
-function exitViewerMode(){
-  applyRole("member", currentMemberId);
-}
-
-
 /* ---------------- Nav ---------------- */
-/* ---------------- Task Calendar ---------------- */
-let calYear = new Date().getFullYear();
-let calMonth = new Date().getMonth();
-let calSelectedDate = null;
-
-function renderCalendar(){
-  const label = document.getElementById("calMonthLabel");
-  const grid = document.getElementById("calGrid");
-  if(!label || !grid) return;
-  label.textContent = `${calYear}年${calMonth + 1}月`;
-  const monthStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}`;
-  const tasksByDay = {};
-  state.tasks.forEach(t => {
-    if(t.deadline && t.deadline.startsWith(monthStr)){
-      const day = t.deadline.slice(8, 10);
-      if(!tasksByDay[day]) tasksByDay[day] = [];
-      tasksByDay[day].push(t);
-    }
-  });
-  const firstDow = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const today = todayStr();
-  let html = "";
-  for(let i = 0; i < firstDow; i++) html += `<div class="cal-day empty"></div>`;
-  for(let d = 1; d <= daysInMonth; d++){
-    const ds = String(d).padStart(2, "0");
-    const dateStr = `${monthStr}-${ds}`;
-    const isToday = dateStr === today;
-    const isSelected = dateStr === calSelectedDate;
-    const tasks = tasksByDay[ds] || [];
-    const dots = tasks.slice(0, 3).map(t => {
-      const cls = isOverdue(t) ? "overdue" : statusBadgeClass(t.status);
-      return `<span class="cal-dot ${cls}">${escapeHtml(t.title.length > 6 ? t.title.slice(0,6)+"…" : t.title)}</span>`;
-    }).join("");
-    const more = tasks.length > 3 ? `<span class="cal-dot" style="background:#94a3b8;">+${tasks.length-3}</span>` : "";
-    html += `<div class="cal-day${isToday?" today":""}${isSelected?" selected":""}" onclick="calSelectDay('${dateStr}')">
-      <span class="cal-day-num">${d}</span>
-      <div class="cal-task-dots">${dots}${more}</div>
-    </div>`;
-  }
-  grid.innerHTML = html;
-  _renderCalDayPanel(calSelectedDate);
-}
-
-function calSelectDay(dateStr){
-  calSelectedDate = calSelectedDate === dateStr ? null : dateStr;
-  renderCalendar();
-}
-
-function _renderCalDayPanel(dateStr){
-  const panel = document.getElementById("calDayPanel");
-  const title = document.getElementById("calDayPanelTitle");
-  const list = document.getElementById("calDayTaskList");
-  if(!panel) return;
-  if(!dateStr){
-    title.textContent = "締切タスク";
-    list.innerHTML = `<p class="muted-text" style="font-size:13px;margin:0;">日付をクリックするとその日の締切タスクが表示されます。</p>`;
-    panel.style.display = "none"; // mobile: hidden / PC: CSS !important で常時表示
-    return;
-  }
-  const tasks = state.tasks.filter(t => t.deadline === dateStr);
-  const d = new Date(dateStr + "T00:00:00");
-  const dow = ["日","月","火","水","木","金","土"][d.getDay()];
-  title.textContent = `${dateStr}（${dow}）の締切タスク`;
-  if(!tasks.length){
-    list.innerHTML = `<p class="muted-text" style="font-size:13px;margin:0;">締切タスクはありません</p>`;
-    panel.style.display = "block";
-    return;
-  }
-  list.innerHTML = tasks.map(t => `
-    <div class="cal-task-item viewer-hide" onclick="openTaskModal('${t.id}')">
-      <span class="badge ${statusBadgeClass(t.status)}">${t.status}</span>
-      <span style="flex:1;">${escapeHtml(t.title)}</span>
-      <span style="color:var(--muted);font-size:12px;">${escapeHtml(memberName(t.assigneeId))}</span>
-      <button class="btn small secondary" title="Googleカレンダーに追加" onclick="event.stopPropagation();addToGoogleCalendar('${t.id}')">📅</button>
-    </div>
-  `).join("");
-  panel.style.display = "block";
-}
-
-function calPrevMonth(){
-  calMonth--; if(calMonth < 0){ calMonth = 11; calYear--; }
-  calSelectedDate = null;
-  renderCalendar();
-}
-function calNextMonth(){
-  calMonth++; if(calMonth > 11){ calMonth = 0; calYear++; }
-  calSelectedDate = null;
-  renderCalendar();
-}
-
 function switchTab(tab){
   document.querySelectorAll(".tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.tab===tab));
   document.querySelectorAll(".section").forEach(s=>s.classList.toggle("active", s.id===tab));
   if(tab==="taskflow") renderTaskFlow();
-  if(tab==="calendar") renderCalendar();
-  if(tab==="settings") loadNotificationSettings();
 }
 
 function showToast(msg){
@@ -1579,6 +1124,7 @@ function memberName(id){
   return m ? m.name : "未割当";
 }
 function projectName(id){
+  if(!id) return "未分類";
   const p = state.projects.find(x=>x.id===id);
   return p ? p.name : "(削除済み)";
 }
@@ -1591,6 +1137,9 @@ function statusBadgeClass(status){
     case "未着手": return "notstarted";
     default: return "plan";
   }
+}
+function priorityClass(p){
+  return p==="高"?"high":p==="低"?"low":"mid";
 }
 function isOverdue(task){
   if(!task.deadline || task.status==="完了") return false;
@@ -1676,42 +1225,16 @@ function renderProjects(){
     }).join("") + `</div>`;
 }
 
-let _projectMemberIds = []; // モーダル内で選択中のメンバーID
-
-function _renderProjectMemberTags(){
-  const tags = document.getElementById("projectMemberTags");
-  const addSel = document.getElementById("projectMemberAdd");
-  if(!tags || !addSel) return;
-  tags.innerHTML = _projectMemberIds.map(id=>{
-    const m = state.members.find(x=>x.id===id);
-    if(!m) return "";
-    return `<span class="member-tag">${escapeHtml(m.name)}<button class="tag-remove" onclick="removeProjectMember('${id}')" title="削除">×</button></span>`;
-  }).join("");
-  // 未選択メンバーのみドロップダウンに表示
-  addSel.innerHTML = `<option value="">＋ メンバーを追加...</option>` +
-    state.members.filter(m=>!_projectMemberIds.includes(m.id))
-      .map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
-}
-
-function addProjectMember(id){
-  if(!id || _projectMemberIds.includes(id)) return;
-  _projectMemberIds.push(id);
-  _renderProjectMemberTags();
-}
-
-function removeProjectMember(id){
-  _projectMemberIds = _projectMemberIds.filter(x=>x!==id);
-  _renderProjectMemberTags();
-}
-
 function refreshProjectSelects(){
+  const memSel = document.getElementById("projectMembers");
+  memSel.innerHTML = state.members.map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
 
   const taskProjSel = document.getElementById("taskProject");
-  taskProjSel.innerHTML = state.projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+  taskProjSel.innerHTML = `<option value="">未分類</option>` + state.projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
 
   const filterProjSel = document.getElementById("taskProjectFilter");
   const currentVal = filterProjSel.value;
-  filterProjSel.innerHTML = `<option value="">全プロジェクト</option>` + state.projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+  filterProjSel.innerHTML = `<option value="">全プロジェクト</option><option value="__none__">未分類</option>` + state.projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
   filterProjSel.value = currentVal;
 }
 function refreshMemberSelects(){
@@ -1725,7 +1248,6 @@ function refreshMemberSelects(){
 }
 
 function openProjectModal(id){
-  if(currentRole === "viewer") return;
   refreshProjectSelects();
   document.getElementById("projectId").value = id || "";
   document.getElementById("projectDeleteBtn").style.display = id ? "inline-block" : "none";
@@ -1737,7 +1259,9 @@ function openProjectModal(id){
     document.getElementById("projectStatus").value = p.status;
     document.getElementById("projectStart").value = p.start||"";
     document.getElementById("projectEnd").value = p.end||"";
-    _projectMemberIds = [...(p.memberIds||[])];
+    Array.from(document.getElementById("projectMembers").options).forEach(o=>{
+      o.selected = (p.memberIds||[]).includes(o.value);
+    });
   }else{
     document.getElementById("projectModalTitle").textContent = "新規プロジェクト";
     document.getElementById("projectName").value = "";
@@ -1745,9 +1269,8 @@ function openProjectModal(id){
     document.getElementById("projectStatus").value = "計画中";
     document.getElementById("projectStart").value = "";
     document.getElementById("projectEnd").value = "";
-    _projectMemberIds = [];
+    Array.from(document.getElementById("projectMembers").options).forEach(o=>o.selected=false);
   }
-  _renderProjectMemberTags();
   document.getElementById("projectModalOverlay").classList.add("active");
 }
 
@@ -1755,7 +1278,7 @@ function saveProject(){
   const name = document.getElementById("projectName").value.trim();
   if(!name){ alert("プロジェクト名を入力してください"); return; }
   const id = document.getElementById("projectId").value;
-  const memberIds = [..._projectMemberIds];
+  const memberIds = Array.from(document.getElementById("projectMembers").selectedOptions).map(o=>o.value);
   const data = {
     name,
     description: document.getElementById("projectDesc").value.trim(),
@@ -1800,7 +1323,7 @@ function renderTasks(){
   const af = document.getElementById("taskAssigneeFilter").value;
   const sf = document.getElementById("taskStatusFilter").value;
   let list = state.tasks.filter(t=>
-    (!pf || t.projectId===pf) &&
+    (!pf || (pf === "__none__" ? !t.projectId : t.projectId===pf)) &&
     (!af || t.assigneeId===af) &&
     (!sf || t.status===sf)
   );
@@ -1813,7 +1336,7 @@ function renderTasks(){
   }
   el.innerHTML = `
     <table>
-      <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>締切</th><th>ステータス</th><th></th></tr></thead>
+      <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>締切</th><th>優先度</th><th>ステータス</th><th></th></tr></thead>
       <tbody>
       ${list.map(t=>`
         <tr onclick="openTaskModal('${t.id}')" style="cursor:pointer;">
@@ -1821,11 +1344,9 @@ function renderTasks(){
           <td>${escapeHtml(projectName(t.projectId))}</td>
           <td>${escapeHtml(memberName(t.assigneeId))}</td>
           <td>${isOverdue(t) ? `<span class="badge overdue">${t.deadline||'-'}</span>` : (t.deadline||'-')}</td>
+          <td><span class="badge ${priorityClass(t.priority)}">${t.priority}</span></td>
           <td><span class="badge ${statusBadgeClass(t.status)}">${t.status}</span></td>
-          <td style="display:flex;gap:4px;align-items:center;">
-            <button class="btn small secondary viewer-hide" onclick="event.stopPropagation();openTaskModal('${t.id}')">編集</button>
-            ${t.deadline ? `<button class="btn small secondary" title="Googleカレンダーに追加" onclick="event.stopPropagation();addToGoogleCalendar('${t.id}')">📅</button>` : ""}
-          </td>
+          <td><button class="btn small secondary" onclick="event.stopPropagation();openTaskModal('${t.id}')">編集</button></td>
         </tr>
       `).join("")}
       </tbody>
@@ -1834,7 +1355,6 @@ function renderTasks(){
 }
 
 function openTaskModal(id){
-  if(currentRole === "viewer") return;
   refreshProjectSelects();
   refreshMemberSelects();
   document.getElementById("taskAssignee").disabled = false;
@@ -1848,73 +1368,24 @@ function openTaskModal(id){
     document.getElementById("taskProject").value = t.projectId;
     document.getElementById("taskAssignee").value = t.assigneeId||"";
     document.getElementById("taskDeadline").value = t.deadline||"";
+    document.getElementById("taskPriority").value = t.priority;
     document.getElementById("taskStatus").value = t.status;
     document.getElementById("taskNotes").value = t.notes||"";
     refreshTaskDependsOnOptions();
     const depSel = document.getElementById("taskDependsOn");
     Array.from(depSel.options).forEach(o=>{ o.selected = (t.dependsOn||[]).includes(o.value); });
   }else{
-    if(state.projects.length===0){
-      alert("先にプロジェクトを作成してください");
-      return;
-    }
     document.getElementById("taskModalTitle").textContent = "新規タスク";
     document.getElementById("taskTitle").value = "";
-    document.getElementById("taskProject").value = state.projects[0].id;
+    document.getElementById("taskProject").value = "";
     document.getElementById("taskAssignee").value = "";
     document.getElementById("taskDeadline").value = "";
+    document.getElementById("taskPriority").value = "中";
     document.getElementById("taskStatus").value = "未着手";
     document.getElementById("taskNotes").value = "";
     refreshTaskDependsOnOptions();
   }
   document.getElementById("taskModalOverlay").classList.add("active");
-  _updateCalAddBtn();
-}
-
-function _updateCalAddBtn(){
-  const deadline = document.getElementById("taskDeadline").value;
-  const btn = document.getElementById("taskCalAddBtn");
-  if(btn) btn.style.display = deadline ? "inline-flex" : "none";
-}
-
-function addToGoogleCalendar(taskId){
-  const t = state.tasks.find(x => x.id === taskId);
-  if(!t || !t.deadline) return;
-  const details = [
-    t.notes,
-    t.assigneeId ? `担当: ${memberName(t.assigneeId)}` : ""
-  ].filter(Boolean).join("\n");
-  const dateCompact = t.deadline.replace(/-/g, "");
-  const endDate = new Date(t.deadline + "T00:00:00");
-  endDate.setDate(endDate.getDate() + 1);
-  const endCompact = endDate.toISOString().slice(0,10).replace(/-/g, "");
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
-    + `&text=${encodeURIComponent(t.title)}`
-    + `&dates=${dateCompact}/${endCompact}`
-    + (details ? `&details=${encodeURIComponent(details)}` : "");
-  window.open(url, "_blank");
-}
-
-function addToGoogleCalendarFromModal(){
-  const title = document.getElementById("taskTitle").value.trim() || "タスク";
-  const deadline = document.getElementById("taskDeadline").value;
-  if(!deadline) return;
-  const notes = document.getElementById("taskNotes").value.trim();
-  const assigneeId = document.getElementById("taskAssignee").value;
-  const details = [
-    notes,
-    assigneeId ? `担当: ${memberName(assigneeId)}` : ""
-  ].filter(Boolean).join("\n");
-  const dateCompact = deadline.replace(/-/g, "");
-  // end date = deadline + 1 day (Google Calendar is exclusive)
-  const endDate = new Date(deadline + "T00:00:00");
-  endDate.setDate(endDate.getDate() + 1);
-  const endCompact = endDate.toISOString().slice(0,10).replace(/-/g, "");
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE`
-    + `&text=${encodeURIComponent(title)}`
-    + `&dates=${dateCompact}/${endCompact}`
-    + (details ? `&details=${encodeURIComponent(details)}` : "");
-  window.open(url, "_blank");
 }
 
 function saveTask(){
@@ -1935,23 +1406,20 @@ function saveTask(){
     projectId: document.getElementById("taskProject").value,
     assigneeId: document.getElementById("taskAssignee").value,
     deadline: document.getElementById("taskDeadline").value,
+    priority: document.getElementById("taskPriority").value,
     status: document.getElementById("taskStatus").value,
     notes: document.getElementById("taskNotes").value.trim(),
     dependsOn
   };
   let rec;
-  let oldRec = null;
   if(isNew){
     rec = {id, ...data};
     state.tasks.push(rec);
   }else{
     rec = state.tasks.find(x=>x.id===id);
-    oldRec = {...rec};
     Object.assign(rec, data);
   }
   fsSet("tasks", rec.id, rec);
-  gcalSyncTask(rec, isNew ? "create" : "update");
-  _notifyTaskChange(oldRec, rec);
   closeModal("taskModalOverlay");
   renderAll();
   showToast("タスクを保存しました");
@@ -1961,8 +1429,6 @@ function deleteTask(){
   const id = document.getElementById("taskId").value;
   if(!id) return;
   if(!confirm("このタスクを削除しますか？")) return;
-  const rec = state.tasks.find(t=>t.id===id);
-  if(rec) gcalSyncTask(rec, "delete");
   state.tasks = state.tasks.filter(t=>t.id!==id);
   const affectedTasks = state.tasks.filter(t=>(t.dependsOn||[]).includes(id));
   affectedTasks.forEach(t=>{ t.dependsOn = t.dependsOn.filter(depId=>depId!==id); });
@@ -1977,7 +1443,7 @@ function deleteTask(){
 function renderMembers(){
   const el = document.getElementById("memberList");
   if(state.members.length===0){
-    el.innerHTML = `<div class="empty">メンバーがいません。ログインすると自動で追加されます。</div>`;
+    el.innerHTML = `<div class="empty">メンバーがいません。「＋ 新規メンバー」から追加してください。</div>`;
     return;
   }
   el.innerHTML = `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">` +
@@ -1986,7 +1452,7 @@ function renderMembers(){
       const projCount = state.projects.filter(p=>(p.memberIds||[]).includes(m.id)).length;
       const initial = m.name ? m.name.charAt(0) : "?";
       return `
-        <div class="card">
+        <div class="card" style="cursor:pointer;" onclick="openMemberModal('${m.id}')">
           <div class="flex-center" style="margin-bottom:8px;">
             <div class="member-avatar">${escapeHtml(initial)}</div>
             <div>
@@ -2001,6 +1467,67 @@ function renderMembers(){
     }).join("") + `</div>`;
 }
 
+function openMemberModal(id){
+  document.getElementById("memberId").value = id || "";
+  document.getElementById("memberDeleteBtn").style.display = id ? "inline-block" : "none";
+  if(id){
+    const m = state.members.find(x=>x.id===id);
+    document.getElementById("memberModalTitle").textContent = "メンバーを編集";
+    document.getElementById("memberName").value = m.name;
+    document.getElementById("memberRole").value = m.role||"";
+    document.getElementById("memberEmail").value = m.email||"";
+  }else{
+    document.getElementById("memberModalTitle").textContent = "新規メンバー";
+    document.getElementById("memberName").value = "";
+    document.getElementById("memberRole").value = "";
+    document.getElementById("memberEmail").value = "";
+  }
+  document.getElementById("memberModalOverlay").classList.add("active");
+}
+
+function saveMember(){
+  const name = document.getElementById("memberName").value.trim();
+  if(!name){ alert("名前を入力してください"); return; }
+  const id = document.getElementById("memberId").value;
+  const data = {
+    name,
+    role: document.getElementById("memberRole").value.trim(),
+    email: document.getElementById("memberEmail").value.trim()
+  };
+  let rec;
+  if(id){
+    rec = state.members.find(x=>x.id===id);
+    Object.assign(rec, data);
+  }else{
+    rec = {id: uid(), ...data};
+    state.members.push(rec);
+  }
+  fsSet("members", rec.id, rec);
+  closeModal("memberModalOverlay");
+  renderAll();
+  showToast("メンバーを保存しました");
+}
+
+function deleteMember(){
+  const id = document.getElementById("memberId").value;
+  if(!id) return;
+  if(!confirm("このメンバーを削除しますか？")) return;
+  state.members = state.members.filter(m=>m.id!==id);
+  const affectedProjects = state.projects.filter(p=>(p.memberIds||[]).includes(id));
+  affectedProjects.forEach(p=>{ p.memberIds = (p.memberIds||[]).filter(mid=>mid!==id); });
+  const affectedTasksM = state.tasks.filter(t=>t.assigneeId===id);
+  affectedTasksM.forEach(t=>{ t.assigneeId=""; });
+  fsDel("members", id);
+  affectedProjects.forEach(p => fsSet("projects", p.id, p));
+  affectedTasksM.forEach(t => fsSet("tasks", t.id, t));
+  closeModal("memberModalOverlay");
+  if(currentRole==="member" && currentMemberId===id){
+    saveRoleState(null, null);
+    showRoleGate();
+  }
+  renderAll();
+  showToast("メンバーを削除しました");
+}
 
 
 /* ---------------- Render: My Tasks (member) ---------------- */
@@ -2032,24 +1559,16 @@ function renderMyTasks(){
       <div class="my-task-item ${overdue?'overdue-item':''} ${done?'done-item':''}">
         <div>
           <div class="title">${escapeHtml(t.title)}</div>
-          <div class="meta">${escapeHtml(projectName(t.projectId))} ・ 締切: ${t.deadline || "未設定"} ${overdue?'⚠️ 期限超過':''}</div>
+          <div class="meta">${escapeHtml(projectName(t.projectId))} ・ 締切: ${t.deadline || "未設定"} ${overdue?'⚠️ 期限超過':''} ・ 優先度: ${escapeHtml(t.priority)}</div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button class="check-btn ${done?'checked':''}" onclick="toggleMyTaskDone('${t.id}')">${done?'✓':''}</button>
-          <button class="btn secondary small" style="padding:4px 8px;font-size:.75rem;" onclick="openTaskModal('${t.id}')">編集</button>
-        </div>
+        <button class="check-btn ${done?'checked':''}" onclick="toggleMyTaskDone('${t.id}')">${done?'✓':''}</button>
       </div>
     `;
   }).join("");
 }
 
-
 function openMemberTaskModal(){
   if(currentRole !== "member" || !currentMemberId) return;
-  if(state.projects.length === 0){
-    alert("プロジェクトがまだ登録されていません。マネージャーに追加してもらいましょう。");
-    return;
-  }
   openTaskModal();
   document.getElementById("taskModalTitle").textContent = "タスクを追加";
   const assigneeSel = document.getElementById("taskAssignee");
@@ -2324,16 +1843,11 @@ const FLOW_ZOOM_MIN = 0.3, FLOW_ZOOM_MAX = 2.5, FLOW_ZOOM_STEP = 0.15;
 function applyFlowZoom(){
   const canvas = document.getElementById("flowCanvas");
   const viewport = document.getElementById("flowCanvasViewport");
-  const scrollEl = document.getElementById("flowScroll");
   if(!canvas || !viewport) return;
   canvas.style.transform = `scale(${flowZoom})`;
   canvas.style.transformOrigin = "0 0";
   viewport.style.width = (flowLogicalW * flowZoom) + "px";
   viewport.style.height = (flowLogicalH * flowZoom) + "px";
-  if(scrollEl){
-    const sz = (20 * flowZoom).toFixed(2);
-    scrollEl.style.backgroundSize = `${sz}px ${sz}px`;
-  }
   const label = document.getElementById("flowZoomLabel");
   if(label) label.textContent = Math.round(flowZoom * 100) + "%";
 }
@@ -2386,7 +1900,6 @@ function handleFlowEscKey(e){
 }
 
 function startNodeDrag(e, taskId){
-  if(currentRole === "viewer") return;
   if(e.button !== undefined && e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
@@ -2414,7 +1927,6 @@ function startNodeDrag(e, taskId){
 }
 
 function startConnectionDrag(e, taskId){
-  if(currentRole === "viewer") return;
   e.preventDefault();
   e.stopPropagation();
   flowDrag = { type: "connection", taskId };
@@ -2425,7 +1937,6 @@ function startConnectionDrag(e, taskId){
 }
 
 function startNodeResize(e, taskId){
-  if(currentRole === "viewer") return;
   if(e.button !== undefined && e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
@@ -2586,7 +2097,6 @@ function addFlowConnection(prereqId, dependentId){
 }
 
 function flowSvgClickHandler(e){
-  if(currentRole === "viewer") return;
   const hit = e.target.closest ? e.target.closest(".trace-hit") : null;
   if(!hit) return;
   const fromId = hit.dataset.from;
@@ -2637,62 +2147,12 @@ function escapeHtml(str){
     .replaceAll("'","&#039;");
 }
 
-/* ---------------- Render: Settings (authorized managers) ---------------- */
-function renderAuthorizedManagers(){
-  const el = document.getElementById("authorizedManagerList");
-  if(!el) return;
-  if(authorizedManagers.length === 0){
-    el.innerHTML = `<div class="empty">認証アカウントがありません</div>`;
-    return;
-  }
-  el.innerHTML = `<table>
-    <thead><tr><th>メールアドレス</th><th></th></tr></thead>
-    <tbody>
-    ${authorizedManagers.map(m => `<tr>
-        <td>${escapeHtml(m.email)}</td>
-        <td style="text-align:right;"><button class="btn small danger" onclick="deleteAuthorizedManager('${m.id}')">削除</button></td>
-      </tr>`).join("")}
-    </tbody>
-  </table>`;
-}
-
-function openAddManagerModal(){
-  document.getElementById("newManagerEmail").value = "";
-  document.getElementById("addManagerModalOverlay").classList.add("active");
-}
-
-async function saveAuthorizedManager(){
-  const email = document.getElementById("newManagerEmail").value.trim().toLowerCase();
-  if(!email){ alert("メールアドレスを入力してください"); return; }
-  if(authorizedManagers.some(m => m.email.toLowerCase() === email)){
-    alert("すでに登録されています"); return;
-  }
-  const ref = fbDb.ref("settings/authorizedManagers").push();
-  await ref.set({email});
-  authorizedManagers.push({id: ref.key, email});
-  closeModal("addManagerModalOverlay");
-  renderAuthorizedManagers();
-  showToast("アカウントを追加しました");
-}
-
-async function deleteAuthorizedManager(id){
-  const m = authorizedManagers.find(x => x.id === id);
-  if(!m) return;
-  if(!confirm(`${m.email} をマネージャー認証から削除しますか？`)) return;
-  await fbDb.ref(`settings/authorizedManagers/${id}`).remove();
-  authorizedManagers = authorizedManagers.filter(x => x.id !== id);
-  renderAuthorizedManagers();
-  showToast("アカウントを削除しました");
-}
-
 function renderAll(){
   renderDashboard();
   renderProjects();
   renderTasks();
   renderMembers();
-  renderAuthorizedManagers();
   if(document.getElementById("taskflow").classList.contains("active")) renderTaskFlow();
-  if(document.getElementById("calendar").classList.contains("active")) renderCalendar();
   if(currentRole === "member") renderMyTasks();
 }
 
@@ -2705,21 +2165,10 @@ window.addEventListener("DOMContentLoaded", ()=>{
   const flowScrollEl = document.getElementById("flowScroll");
   if(flowScrollEl) flowScrollEl.addEventListener("wheel", handleFlowWheelZoom, { passive: false });
 
-  // GIS 初期化（非同期ロードのためポーリングして準備完了を待つ）
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/TPMS/sw.js').catch(e => console.warn('SW登録失敗:', e));
-  }
-  _initGIS();
-
   // Firebase 初期化
   const app = firebase.initializeApp(FIREBASE_CONFIG);
   fbAuth = firebase.auth();
   fbDb   = firebase.database();
-
-  fbAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
-  // 過去のリダイレクト認証の残骸を消去（missing initial stateエラーの原因になる）
-  fbAuth.getRedirectResult().catch(()=>{});
 
   // 認証状態を監視（ページリロード時も自動復元）
   fbAuth.onAuthStateChanged(async (user) => {
@@ -2734,12 +2183,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
       currentUserName = await _loadUserName(user.uid);
       renderAll();
 
-      const isManagerUser = isAuthorizedManager(currentGoogleUser.email);
       if(!currentUserName){
         // 初回ログイン：姓名入力ステップを表示
         document.getElementById("roleGate").classList.remove("hidden");
         _showNameStep();
-      } else if(isManagerUser){
+      } else {
         const savedRole = loadRoleState();
         if(savedRole && savedRole.role === "manager"){
           applyRole("manager", null);
@@ -2750,9 +2198,6 @@ window.addEventListener("DOMContentLoaded", ()=>{
         }else{
           showRoleGate();
         }
-      } else {
-        // マネージャー以外は自動でメンバーログイン
-        await _loginAsMember();
       }
     }else{
       currentGoogleUser = null;
