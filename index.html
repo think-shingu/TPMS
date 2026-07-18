@@ -865,8 +865,12 @@ let notifPermission = localStorage.getItem("tpms_notif") === "1";
 
 window.OneSignalDeferred = window.OneSignalDeferred || [];
 OneSignalDeferred.push(async function(OneSignal){
-  await OneSignal.init({ appId: ONESIGNAL_APP_ID, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true });
-  // optedIn は init 直後に不確定なため localStorage の値をそのまま使う
+  try{
+    await OneSignal.init({ appId: ONESIGNAL_APP_ID, notifyButton: { enable: false }, allowLocalhostAsSecureOrigin: true });
+    console.log("[OneSignal] init ok, optedIn:", OneSignal.User.PushSubscription.optedIn);
+  }catch(e){
+    console.error("[OneSignal] init failed:", e);
+  }
   _updateNotifBell();
 });
 
