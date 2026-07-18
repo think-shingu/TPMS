@@ -617,6 +617,7 @@
   <button class="tab-btn" data-tab="taskflow" onclick="switchTab('taskflow')">タスクフロー</button>
   <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')">カレンダー</button>
   <button class="tab-btn" data-tab="members" onclick="switchTab('members')">メンバー</button>
+  <button class="tab-btn" data-tab="memo" onclick="switchTab('memo')">メモ</button>
   <button class="tab-btn gear-btn" data-tab="managerAuth" onclick="switchTab('managerAuth')" title="認証管理" style="margin-left:auto;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
   </button>
@@ -627,6 +628,7 @@
   <button class="tab-btn" data-tab="projects" onclick="switchTab('projects')">自分のプロジェクト</button>
   <button class="tab-btn" data-tab="taskflow" onclick="switchTab('taskflow')">タスクフロー</button>
   <button class="tab-btn" data-tab="memberCalendar" onclick="switchTab('memberCalendar')">カレンダー</button>
+  <button class="tab-btn" data-tab="memo" onclick="switchTab('memo')">メモ</button>
 </nav>
 
 <main>
@@ -758,6 +760,14 @@
     <div id="memberCalContainer"></div>
   </section>
 
+  <!-- MEMO -->
+  <section id="memo" class="section">
+    <div class="card" style="padding:16px;">
+      <textarea id="memoContent" oninput="onMemoInput()" style="width:100%;min-height:480px;border:none;outline:none;resize:vertical;font-size:14px;line-height:1.8;background:transparent;" placeholder="メモを入力..."></textarea>
+    </div>
+    <div style="text-align:right;margin-top:6px;font-size:12px;color:var(--muted);" id="memoSaveStatus">保存済み</div>
+  </section>
+
   <!-- MANAGER AUTH -->
   <section id="managerAuth" class="section manager-only">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
@@ -824,7 +834,6 @@
     </div>
     <div class="form-row"><label>締切</label><input type="date" id="taskDeadline"></div>
     <input type="hidden" id="taskStatus" value="未完了">
-    <div class="form-row"><label>メモ</label><textarea id="taskNotes" rows="2"></textarea></div>
     <div class="modal-actions">
       <button class="btn danger" id="taskDeleteBtn" onclick="deleteTask()" style="display:none;">削除</button>
       <button class="btn secondary" onclick="closeModal('taskModalOverlay')">キャンセル</button>
@@ -1266,6 +1275,7 @@ function switchTab(tab){
   if(tab==="managerAuth")    renderManagerAuth();
   if(tab==="calendar")       renderCalView("managerCalContainer", state.tasks);
   if(tab==="memberCalendar") renderCalView("memberCalContainer",  memberCalTasks());
+  if(tab==="memo")           loadMemo();
 }
 
 /* ---------------- Calendar ---------------- */
@@ -1657,7 +1667,6 @@ function openTaskModal(id){
     document.getElementById("taskAssignee").value = t.assigneeId||"";
     document.getElementById("taskDeadline").value = t.deadline||"";
     document.getElementById("taskStatus").value = t.status;
-    document.getElementById("taskNotes").value = t.notes||"";
     refreshTaskDependsOnOptions();
     const depSel = document.getElementById("taskDependsOn");
     Array.from(depSel.options).forEach(o=>{ o.selected = (t.dependsOn||[]).includes(o.value); });
@@ -1669,7 +1678,6 @@ function openTaskModal(id){
     document.getElementById("taskAssignee").value = "";
     document.getElementById("taskDeadline").value = "";
     document.getElementById("taskStatus").value = "未完了";
-    document.getElementById("taskNotes").value = "";
     refreshTaskDependsOnOptions();
     refreshAssigneeByProject();
   }
@@ -1696,7 +1704,6 @@ function saveTask(){
     assigneeId: document.getElementById("taskAssignee").value,
     deadline: document.getElementById("taskDeadline").value,
     status: document.getElementById("taskStatus").value,
-    notes: document.getElementById("taskNotes").value.trim(),
     dependsOn
   };
   let rec;
@@ -1742,6 +1749,35 @@ function deleteTask(){
 }
 
 /* ---------------- Render: Members ---------------- */
+/* ---------------- Memo ---------------- */
+let _memoTimer = null;
+
+async function loadMemo(){
+  if(!currentGoogleUser?.uid || !fbDb) return;
+  try{
+    const snap = await fbDb.ref(`users/${currentGoogleUser.uid}/memo`).once("value");
+    const el = document.getElementById("memoContent");
+    if(el) el.value = snap.val() || "";
+    const st = document.getElementById("memoSaveStatus");
+    if(st) st.textContent = "保存済み";
+  }catch(e){ console.warn("memo load failed", e); }
+}
+
+function onMemoInput(){
+  const st = document.getElementById("memoSaveStatus");
+  if(st) st.textContent = "編集中...";
+  clearTimeout(_memoTimer);
+  _memoTimer = setTimeout(async ()=>{
+    if(!currentGoogleUser?.uid || !fbDb) return;
+    const content = document.getElementById("memoContent")?.value || "";
+    try{
+      await fbDb.ref(`users/${currentGoogleUser.uid}/memo`).set(content);
+      const s = document.getElementById("memoSaveStatus");
+      if(s) s.textContent = "保存済み";
+    }catch(e){ console.warn("memo save failed", e); }
+  }, 800);
+}
+
 function renderMembers(){
   const el = document.getElementById("memberList");
   if(state.members.length===0){
