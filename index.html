@@ -879,8 +879,12 @@ function _updateNotifBell(){
 
 function osLogin(email){
   if(!email) return;
+  const extId = _osExtId(email);
   OneSignalDeferred.push(async function(OneSignal){
-    try{ await OneSignal.login(_osExtId(email)); }catch(e){ console.warn("OneSignal login failed", e); }
+    try{
+      await OneSignal.login(extId);
+      console.log("[OneSignal] login ok:", extId);
+    }catch(e){ console.warn("[OneSignal] login failed:", e); }
   });
 }
 
@@ -896,6 +900,7 @@ function toggleNotifBell(){
           await OneSignal.Notifications.requestPermission();
         }
         await OneSignal.User.PushSubscription.optIn();
+        if(currentGoogleUser?.email) await OneSignal.login(_osExtId(currentGoogleUser.email));
         notifPermission = true;
         showToast("通知をオンにしました");
       }
