@@ -2516,9 +2516,11 @@ window.addEventListener("DOMContentLoaded", ()=>{
         }
       }
       if(currentUserName) await _ensureMemberRecord(currentGoogleUser, currentUserName);
-      const _cfgSnap = await fbDb.ref("config/onesignalApiKey").once("value");
-      if(_cfgSnap.exists()){ oneSignalApiKey = _cfgSnap.val(); console.log("[Config] API key loaded"); }
-      else{ console.warn("[Config] API key not found in Firebase /config/onesignalApiKey"); }
+      try{
+        const _cfgSnap = await fbDb.ref("config/onesignalApiKey").once("value");
+        if(_cfgSnap.exists()){ oneSignalApiKey = _cfgSnap.val(); console.log("[Config] API key loaded"); }
+        else{ console.warn("[Config] API key not found at /config/onesignalApiKey"); }
+      }catch(e){ console.error("[Config] Firebase read error:", e.message); }
       renderAll();
 
       if(!currentUserName){
