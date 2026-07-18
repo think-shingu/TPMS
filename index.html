@@ -892,29 +892,37 @@ function osLogin(email){
   });
 }
 
-function toggleNotifBell(){
-  OneSignalDeferred.push(async function(OneSignal){
-    try{
-      if(notifPermission){
+async function toggleNotifBell(){
+  try{
+    if(notifPermission){
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal){
         await OneSignal.User.PushSubscription.optOut();
-        notifPermission = false;
-        showToast("通知をオフにしました");
-      } else {
-        if(!OneSignal.Notifications.permission){
-          await OneSignal.Notifications.requestPermission();
-        }
-        await OneSignal.User.PushSubscription.optIn();
-        if(currentGoogleUser?.email) await OneSignal.login(_osExtId(currentGoogleUser.email));
-        notifPermission = true;
-        showToast("通知をオンにしました");
-      }
-      localStorage.setItem("tpms_notif", notifPermission ? "1" : "0");
-    }catch(e){
-      console.error("Notification toggle failed:", e);
-      showToast("通知の切り替えに失敗しました");
+      });
+      notifPermission = false;
+      localStorage.setItem("tpms_notif", "0");
+      showToast("通知をオフにしました");
+    } else {
+      const perm = await Notification.requestPermission();
+      if(perm !== "granted"){ showToast("通知が許可されませんでした"); return; }
+      OneSignalDeferred.push(async function(OneSignal){
+        try{
+          await OneSignal.User.PushSubscription.optIn();
+          if(currentGoogleUser?.email){
+            await OneSignal.login(_osExtId(currentGoogleUser.email));
+            console.log("[OneSignal] login ok:", _osExtId(currentGoogleUser.email));
+          }
+        }catch(e){ console.warn("[OneSignal] optIn/login failed:", e); }
+      });
+      notifPermission = true;
+      localStorage.setItem("tpms_notif", "1");
+      showToast("通知をオンにしました");
     }
-    _updateNotifBell();
-  });
+  }catch(e){
+    console.error("Notification toggle failed:", e);
+    showToast("通知の切り替えに失敗しました");
+  }
+  _updateNotifBell();
 }
 
 async function sendPushNotification(targetEmail, title, body){
