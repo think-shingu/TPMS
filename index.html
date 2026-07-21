@@ -1653,13 +1653,6 @@ function renderTasks(){
               ? `<button class="btn small secondary" onclick="event.stopPropagation();setTaskStatus('${t.id}','未完了')" title="未完了に戻す">↩</button>`
               : `<button class="btn small ${t.status==='完了' ? '' : 'primary'}" onclick="event.stopPropagation();toggleMyTaskDone('${t.id}')" title="${t.status==='完了' ? '未完了に戻す' : '完了にする'}">${t.status==='完了' ? '↩' : '✓'}</button>`
             }
-            <div style="display:inline-flex;flex-direction:column;gap:2px;vertical-align:middle;">
-              <button class="btn small secondary" onclick="event.stopPropagation();openTaskModal('${t.id}')">編集</button>
-              ${t.status!=='取りやめ'
-                ? `<button class="btn small secondary" onclick="event.stopPropagation();setTaskStatus('${t.id}','取りやめ')" style="font-size:11px;">取りやめ</button>`
-                : ''
-              }
-            </div>
           </td>
         </tr>
       `).join("")}
