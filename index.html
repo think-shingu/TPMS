@@ -1982,13 +1982,15 @@ function renderMyTasks(){
   el.innerHTML = list.map(t=>{
     const overdue = isOverdue(t);
     const done = getMemberStatus(t, currentMemberId)==="完了";
+    const proj = state.projects.find(p=>p.id===t.projectId);
+    const canEdit = proj && proj.createdBy === currentMemberId;
     return `
-      <div class="my-task-item ${overdue?'overdue-item':''} ${done?'done-item':''}">
+      <div class="my-task-item ${overdue?'overdue-item':''} ${done?'done-item':''}" ${canEdit?`onclick="openTaskModal('${t.id}')" style="cursor:pointer;"`:''}>
         <div>
-          <div class="title">${escapeHtml(t.title)}</div>
+          <div class="title">${escapeHtml(t.title)}${canEdit?' <span style="font-size:11px;color:var(--muted);">✎</span>':''}</div>
           <div class="meta">${escapeHtml(projectName(t.projectId))} ・ 締切: ${t.deadline || "未設定"} ${overdue?'⚠️ 期限超過':''}</div>
         </div>
-        <button class="check-btn ${done?'checked':''}" onclick="toggleMyTaskDone('${t.id}')">${done?'✓':''}</button>
+        <button class="check-btn ${done?'checked':''}" onclick="event.stopPropagation();toggleMyTaskDone('${t.id}')">${done?'✓':''}</button>
       </div>
     `;
   }).join("");
