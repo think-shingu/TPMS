@@ -1729,7 +1729,7 @@ function renderTasks(){
       ${list.map(t=>{
         const ds = derivedTaskStatus(t);
         const ids = getAssigneeIds(t);
-        const assigneeDisplay = ids.length > 1 ? `${ids.length}人` : (ids.length===1 ? escapeHtml(memberName(ids[0])) : "-");
+        const assigneeDisplay = ids.length > 1 ? `計${ids.length}名` : (ids.length===1 ? escapeHtml(memberName(ids[0])) : "-");
         const ct = completionText(t);
         let statusCell;
         if(ds==="取りやめ"){
