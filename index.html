@@ -697,6 +697,10 @@
 
   <!-- MEMBERS -->
   <section id="members" class="section manager-only">
+    <div class="toolbar" style="margin-bottom:12px;">
+      <div></div>
+      <button class="btn danger" onclick="openDeleteMemberModal()">アカウントを削除</button>
+    </div>
     <div id="memberList"></div>
   </section>
 
@@ -838,6 +842,30 @@
 </div>
 
 <!-- MEMBER MODAL -->
+
+<!-- DELETE MEMBER MODAL -->
+<div class="modal-overlay" id="deleteMemberModalOverlay">
+  <div class="modal">
+    <h3 id="deleteMemberModalTitle">削除するアカウントを選択</h3>
+    <div id="deleteMemberStep1">
+      <p class="muted-text" style="margin-bottom:12px;">削除したいメンバーを選択してください。</p>
+      <div id="deleteMemberCheckList" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="closeModal('deleteMemberModalOverlay')">キャンセル</button>
+        <button class="btn danger" onclick="deleteMemberConfirm()">次へ</button>
+      </div>
+    </div>
+    <div id="deleteMemberStep2" style="display:none;">
+      <p style="margin-bottom:8px;">以下のアカウントを削除します。よろしいですか？</p>
+      <div id="deleteMemberConfirmList" style="margin-bottom:16px;display:flex;flex-direction:column;gap:4px;"></div>
+      <p class="muted-text" style="font-size:12px;margin-bottom:12px;">※ 担当タスクの割当が解除されます。再サインインすると再登録されます。</p>
+      <div class="modal-actions">
+        <button class="btn secondary" onclick="deleteMemberBack()">戻る</button>
+        <button class="btn danger" onclick="deleteMemberExecute()">削除する</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="status-popover" id="statusPopover" style="display:none;"></div>
 <div class="toast" id="toast"></div>
@@ -1926,11 +1954,10 @@ function renderMembers(){
         <div class="card">
           <div class="flex-center" style="margin-bottom:8px;">
             <div class="member-avatar">${escapeHtml(initial)}</div>
-            <div style="flex:1;">
+            <div>
               <div style="font-weight:600;">${escapeHtml(m.name)}</div>
               <div class="muted-text">${escapeHtml(m.email||"")}</div>
             </div>
-            <button class="btn small danger" onclick="deleteMember('${m.id}')" title="アカウントを削除">削除</button>
           </div>
           <div class="muted-text">📁 参加プロジェクト: ${projCount}件</div>
           <div class="muted-text">✅ 未完了タスク: ${taskCount}件</div>
@@ -1939,10 +1966,47 @@ function renderMembers(){
     }).join("") + `</div>`;
 }
 
+function openDeleteMemberModal(){
+  document.getElementById("deleteMemberStep1").style.display = "";
+  document.getElementById("deleteMemberStep2").style.display = "none";
+  document.getElementById("deleteMemberModalTitle").textContent = "削除するアカウントを選択";
+  const list = document.getElementById("deleteMemberCheckList");
+  list.innerHTML = state.members.map(m=>`
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:6px;border:1px solid var(--border);border-radius:6px;">
+      <input type="checkbox" class="delete-member-check" value="${m.id}">
+      <span>
+        <span style="font-weight:600;">${escapeHtml(m.name)}</span>
+        <span class="muted-text" style="margin-left:6px;font-size:12px;">${escapeHtml(m.email||"")}</span>
+      </span>
+    </label>
+  `).join("");
+  document.getElementById("deleteMemberModalOverlay").classList.add("active");
+}
+function deleteMemberConfirm(){
+  const selected = Array.from(document.querySelectorAll(".delete-member-check:checked")).map(cb=>cb.value);
+  if(!selected.length){ showToast("アカウントを選択してください"); return; }
+  const confirmList = document.getElementById("deleteMemberConfirmList");
+  confirmList.innerHTML = selected.map(id=>{
+    const m = state.members.find(x=>x.id===id);
+    return m ? `<div style="padding:6px 10px;background:var(--bg);border-radius:6px;">👤 ${escapeHtml(m.name)} <span class="muted-text">${escapeHtml(m.email||"")}</span></div>` : "";
+  }).join("");
+  document.getElementById("deleteMemberStep1").style.display = "none";
+  document.getElementById("deleteMemberStep2").style.display = "";
+  document.getElementById("deleteMemberModalTitle").textContent = "削除の確認";
+}
+function deleteMemberBack(){
+  document.getElementById("deleteMemberStep1").style.display = "";
+  document.getElementById("deleteMemberStep2").style.display = "none";
+  document.getElementById("deleteMemberModalTitle").textContent = "削除するアカウントを選択";
+}
+function deleteMemberExecute(){
+  const selected = Array.from(document.querySelectorAll(".delete-member-check:checked")).map(cb=>cb.value);
+  selected.forEach(id=>deleteMember(id));
+  closeModal("deleteMemberModalOverlay");
+}
 function deleteMember(memberId){
   const m = state.members.find(x=>x.id===memberId);
   if(!m) return;
-  if(!confirm(`「${m.name}」のアカウントをシステムから削除しますか？\n※ 担当タスクの割当は解除されます。再サインインすると再登録されます。`)) return;
   // unassign from tasks
   state.tasks.forEach(t=>{
     const ids = getAssigneeIds(t);
