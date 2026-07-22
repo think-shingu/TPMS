@@ -1412,12 +1412,34 @@ function showStatusPopover(taskId, event){
   if(!t) return;
   const ids = getAssigneeIds(t);
   const pop = document.getElementById("statusPopover");
-  if(!ids.length){ pop.style.display="none"; return; }
-  pop.innerHTML = ids.map(mid=>{
-    const ms = getMemberStatus(t, mid);
-    const bc = ms==="完了" ? "done" : "notstarted";
-    return `<div class="status-popover-row"><span>${escapeHtml(memberName(mid))}</span><span class="badge ${bc}">${ms}</span></div>`;
-  }).join("");
+  if(t.status==="取りやめ" || !ids.length){ pop.style.display="none"; return; }
+  if(ids.length===1){
+    toggleMemberStatus(taskId, ids[0]);
+    pop.style.display="none";
+    return;
+  }
+  const renderPop = ()=>{
+    const task = state.tasks.find(x=>x.id===taskId);
+    pop.innerHTML = getAssigneeIds(task).map(mid=>{
+      const ms = getMemberStatus(task, mid);
+      const bc = ms==="完了" ? "done" : "notstarted";
+      return `<div class="status-popover-row" style="cursor:pointer;" onclick="event.stopPropagation();toggleMemberStatus('${taskId}','${mid}');this.closest('#statusPopover') && renderStatusPopoverContent('${taskId}')">
+        <span>${escapeHtml(memberName(mid))}</span><span class="badge ${bc}">${ms}</span>
+      </div>`;
+    }).join("");
+  };
+  renderPop();
+  window.renderStatusPopoverContent = (tid)=>{
+    const task = state.tasks.find(x=>x.id===tid);
+    if(!task) return;
+    pop.innerHTML = getAssigneeIds(task).map(mid=>{
+      const ms = getMemberStatus(task, mid);
+      const bc = ms==="完了" ? "done" : "notstarted";
+      return `<div class="status-popover-row" style="cursor:pointer;" onclick="event.stopPropagation();toggleMemberStatus('${tid}','${mid}');renderStatusPopoverContent('${tid}')">
+        <span>${escapeHtml(memberName(mid))}</span><span class="badge ${bc}">${ms}</span>
+      </div>`;
+    }).join("");
+  };
   const r = event.target.getBoundingClientRect();
   pop.style.display = "block";
   pop.style.top = (r.bottom + window.scrollY + 4) + "px";
@@ -1702,7 +1724,7 @@ function renderTasks(){
   }
   el.innerHTML = `
     <table>
-      <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>締切</th><th>ステータス</th><th></th></tr></thead>
+      <thead><tr><th>タスク</th><th>プロジェクト</th><th>担当</th><th>締切</th><th>ステータス</th></tr></thead>
       <tbody>
       ${list.map(t=>{
         const ds = derivedTaskStatus(t);
@@ -1723,13 +1745,7 @@ function renderTasks(){
           <td>${escapeHtml(projectName(t.projectId))}</td>
           <td>${assigneeDisplay}</td>
           <td>${isOverdue(t) ? `<span class="badge overdue">${t.deadline||'-'}</span>` : (t.deadline||'-')}</td>
-          <td onclick="event.stopPropagation();showStatusPopover('${t.id}',event)" style="cursor:pointer;" title="クリックで担当者別ステータス確認">${statusCell}</td>
-          <td style="white-space:nowrap;">
-            ${ds==='取りやめ'
-              ? `<button class="btn small secondary" onclick="event.stopPropagation();setTaskStatus('${t.id}','未完了')" title="未完了に戻す">↩</button>`
-              : `<button class="btn small ${ds==='完了' ? '' : 'primary'}" onclick="event.stopPropagation();toggleMyTaskDone('${t.id}')" title="${ds==='完了' ? '未完了に戻す' : '完了にする'}">${ds==='完了' ? '↩' : '✓'}</button>`
-            }
-          </td>
+          <td onclick="event.stopPropagation();showStatusPopover('${t.id}',event)" style="cursor:pointer;" title="${ds==='取りやめ' ? '' : 'タップで完了/未完了切替'}">${statusCell}</td>
         </tr>
       `}).join("")}
       </tbody>
@@ -1997,17 +2013,19 @@ function openMemberTaskModal(){
   document.getElementById("taskModalTitle").textContent = "タスクを追加";
 }
 
-function toggleMyTaskDone(taskId){
+function toggleMemberStatus(taskId, memberId){
   const t = state.tasks.find(x=>x.id===taskId);
-  if(!t) return;
+  if(!t || t.status==="取りやめ") return;
   if(!t.memberStatuses) t.memberStatuses={};
-  const cur = t.memberStatuses[currentMemberId]||"未完了";
-  t.memberStatuses[currentMemberId] = cur==="完了" ? "未完了" : "完了";
+  const cur = t.memberStatuses[memberId]||"未完了";
+  t.memberStatuses[memberId] = cur==="完了" ? "未完了" : "完了";
   t.status = derivedTaskStatus(t);
   t.assigneeId = getAssigneeIds(t)[0]||"";
   fsSet("tasks", t.id, t);
   renderMyTasks(); renderDashboard(); renderTasks();
+  return t;
 }
+function toggleMyTaskDone(taskId){ toggleMemberStatus(taskId, currentMemberId); }
 function taskToggleCancel(){
   const id = document.getElementById("taskId").value;
   if(!id) return;
