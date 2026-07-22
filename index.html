@@ -644,7 +644,7 @@
   <!-- DASHBOARD -->
   <section id="dashboard" class="section manager-only active">
     <div class="grid cards-4" style="margin-bottom:20px;">
-      <div class="card stat-card"><div class="num" id="statProjects">0</div><div class="label">進行中プロジェクト</div></div>
+      <div class="card stat-card"><div class="num" id="statProjects">0</div><div class="label">プロジェクト数</div></div>
       <div class="card stat-card"><div class="num" id="statTasks">0</div><div class="label">未完了タスク</div></div>
       <div class="card stat-card"><div class="num" id="statOverdue">0</div><div class="label">期限超過タスク</div></div>
       <div class="card stat-card"><div class="num" id="statMembers">0</div><div class="label">メンバー数</div></div>
@@ -666,13 +666,6 @@
   <section id="projects" class="section">
     <div class="toolbar">
       <div class="filters">
-        <select id="projectStatusFilter" onchange="renderProjects()">
-          <option value="">全ステータス</option>
-          <option value="計画中">計画中</option>
-          <option value="進行中">進行中</option>
-          <option value="完了">完了</option>
-          <option value="保留">保留</option>
-        </select>
       </div>
       <button class="btn" onclick="openProjectModal()">＋ 新規プロジェクト</button>
     </div>
@@ -804,14 +797,6 @@
     <input type="hidden" id="projectId">
     <div class="form-row"><label>プロジェクト名</label><input type="text" id="projectName"></div>
     <div class="form-row"><label>説明</label><textarea id="projectDesc" rows="3"></textarea></div>
-    <div class="form-row"><label>ステータス</label>
-      <select id="projectStatus">
-        <option value="計画中">計画中</option>
-        <option value="進行中">進行中</option>
-        <option value="完了">完了</option>
-        <option value="保留">保留</option>
-      </select>
-    </div>
     <div class="form-row"><label>開始日</label><input type="date" id="projectStart"></div>
     <div class="form-row"><label>締切日</label><input type="date" id="projectEnd"></div>
     <div class="form-row"><label>作成者</label><select id="projectCreator"><option value="">-</option></select></div>
@@ -1533,7 +1518,7 @@ function projectProgress(projectId){
 
 /* ---------------- Render: Dashboard ---------------- */
 function renderDashboard(){
-  document.getElementById("statProjects").textContent = state.projects.filter(p=>p.status==="進行中").length;
+  document.getElementById("statProjects").textContent = state.projects.length;
   document.getElementById("statTasks").textContent = state.tasks.filter(t=>derivedTaskStatus(t)!=="完了" && t.status!=="取りやめ").length;
   document.getElementById("statOverdue").textContent = state.tasks.filter(isOverdue).length;
   document.getElementById("statMembers").textContent = state.members.length;
@@ -1561,7 +1546,7 @@ function renderDashboard(){
   }
 
   const progEl = document.getElementById("projectProgressList");
-  const activeProjects = state.projects.filter(p=>p.status!=="完了");
+  const activeProjects = state.projects;
   if(activeProjects.length===0){
     progEl.innerHTML = `<div class="empty">進行中のプロジェクトはありません</div>`;
   }else{
@@ -1581,8 +1566,7 @@ function renderDashboard(){
 
 /* ---------------- Render: Projects ---------------- */
 function renderProjects(){
-  const filter = document.getElementById("projectStatusFilter").value;
-  let list = state.projects.filter(p=> !filter || p.status===filter);
+  let list = state.projects.slice();
   if(currentRole === "member" && !isReadOnly) list = list.filter(p => p.createdBy === currentMemberId);
   const el = document.getElementById("projectList");
   if(list.length===0){
@@ -1597,7 +1581,6 @@ function renderProjects(){
         <div class="card" style="cursor:pointer;" onclick="openProjectModal('${p.id}')">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
             <h3 style="margin:0 0 6px;font-size:15px;">${escapeHtml(p.name)}</h3>
-            <span class="badge ${statusBadgeClass(p.status)}">${p.status}</span>
           </div>
           <p class="muted-text" style="min-height:32px;">${escapeHtml(p.description||"")}</p>
           <div class="progress-bar" style="margin-bottom:8px;"><div style="width:${pct}%;"></div></div>
@@ -1656,7 +1639,6 @@ function openProjectModal(id){
     document.getElementById("projectModalTitle").textContent = "プロジェクトを編集";
     document.getElementById("projectName").value = p.name;
     document.getElementById("projectDesc").value = p.description||"";
-    document.getElementById("projectStatus").value = p.status;
     document.getElementById("projectStart").value = p.start||"";
     document.getElementById("projectEnd").value = p.end||"";
     creatorSel.value = p.createdBy||"";
@@ -1667,7 +1649,6 @@ function openProjectModal(id){
     document.getElementById("projectModalTitle").textContent = "新規プロジェクト";
     document.getElementById("projectName").value = "";
     document.getElementById("projectDesc").value = "";
-    document.getElementById("projectStatus").value = "計画中";
     document.getElementById("projectStart").value = "";
     document.getElementById("projectEnd").value = "";
     creatorSel.value = currentRole === "member" ? currentMemberId : "";
@@ -1685,7 +1666,6 @@ function saveProject(){
   const data = {
     name,
     description: document.getElementById("projectDesc").value.trim(),
-    status: document.getElementById("projectStatus").value,
     start: document.getElementById("projectStart").value,
     end: document.getElementById("projectEnd").value,
     memberIds,
