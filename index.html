@@ -726,7 +726,7 @@
           <div class="flow-toolbar-handle" id="flowToolbarHandle" title="ドラッグして移動">⠿</div>
           <select id="flowProjectSelect" onchange="renderTaskFlow()"></select>
           <button class="btn small" onclick="openTaskModalFromFlow()" id="flowNewTaskBtn">＋ 新規タスク</button>
-          <button class="btn secondary small" onclick="autoArrangeFlow()">🧭 自動整列</button>
+          <button class="btn secondary small" onclick="autoArrangeFlow()" id="flowAutoArrangeBtn">🧭 自動整列</button>
           <button class="btn secondary small" onclick="toggleFlowFullscreen()" id="flowFullscreenBtn">⛶ 全画面表示</button>
           <div class="flow-zoom-controls">
             <button class="btn secondary small" onclick="flowZoomOut()" title="縮小">－</button>
@@ -2245,6 +2245,8 @@ function renderTaskFlow(){
   const flowNewBtn = document.getElementById("flowNewTaskBtn");
   if(flowNewBtn) flowNewBtn.style.display = isReadOnly ? "none" : "";
   refreshFlowProjectSelect();
+  const arrangeBtn = document.getElementById("flowAutoArrangeBtn");
+  if(arrangeBtn) arrangeBtn.style.opacity = _isFlowEditable() ? "1" : "0.4";
   const projectId = document.getElementById("flowProjectSelect").value;
   const svg = document.getElementById("flowSvg");
   const nodesEl = document.getElementById("flowNodes");
@@ -2316,9 +2318,16 @@ function renderTaskFlow(){
   applyFlowZoom();
 }
 
+function _isFlowEditable(){
+  const projectId = document.getElementById("flowProjectSelect").value;
+  if(!isReadOnly) return true;
+  const project = state.projects.find(p=>p.id===projectId);
+  return project && project.createdBy === currentMemberId;
+}
 function autoArrangeFlow(){
   const projectId = document.getElementById("flowProjectSelect").value;
   if(!projectId) return;
+  if(!_isFlowEditable()){ showToast("閲覧モードのため操作できません"); return; }
   const arranged = state.tasks.filter(t=>t.projectId===projectId);
   arranged.forEach(t=>{ delete t.flowPos; });
   arranged.forEach(t => fsSet("tasks", t.id, t));
