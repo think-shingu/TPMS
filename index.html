@@ -589,7 +589,7 @@
       <div id="googleUserCard" class="google-user-card"></div>
       <div class="role-choice">
         <button id="chooseManagerBtn" onclick="chooseRole('manager')">
-          🧑‍💼 マネージャーとして利用
+          🧑‍💼 管理として利用
           <span class="sub">プロジェクト・タスク・メンバーを管理し、全体の相関を把握</span>
         </button>
         <button id="chooseViewerBtn" onclick="enterViewerMode()">
@@ -773,10 +773,10 @@
   <!-- MANAGER AUTH -->
   <section id="managerAuth" class="section manager-only">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-      <h2 style="margin:0;">マネージャー認証管理</h2>
+      <h2 style="margin:0;">管理認証管理</h2>
     </div>
     <div class="card" style="max-width:560px;">
-      <p style="margin:0 0 14px;color:var(--muted);font-size:13px;">マネージャーとしてアクセスできるGoogleアカウントを管理します。登録されたメールアドレスのみマネージャー画面を利用できます。</p>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:13px;">管理としてアクセスできるGoogleアカウントを管理します。登録されたメールアドレスのみ管理画面を利用できます。</p>
       <div id="managerAuthList" style="margin-bottom:18px;"></div>
       <div class="form-row">
         <label>メールアドレスを追加</label>
@@ -1151,11 +1151,11 @@ async function chooseRole(role){
     if(!snap.exists()){
       const allSnap = await fbDb.ref("managerEmails").once("value");
       if(!allSnap.exists()){
-        const ok = confirm(`マネージャーアカウントがまだ登録されていません。\n${currentGoogleUser.email} を最初のマネージャーとして登録しますか？`);
+        const ok = confirm(`管理アカウントがまだ登録されていません。\n${currentGoogleUser.email} を最初の管理として登録しますか？`);
         if(!ok) return;
         await fbDb.ref(`managerEmails/${emailKey}`).set(currentGoogleUser.email);
       } else {
-        alert("このアカウントはマネージャーとして登録されていません。\n登録済みのマネージャーに追加を依頼してください。");
+        alert("このアカウントは管理として登録されていません。\n登録済みの管理に追加を依頼してください。");
         return;
       }
     }
@@ -1221,7 +1221,7 @@ function applyRole(role, memberId){
   const avatarClickHtml = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button>`;
   const bellBtn = `<button id="notifBell" class="notif-bell-btn" onclick="toggleNotifBell()" title="プッシュ通知設定">${notifPermission ? "🔔" : "🔕"}</button>`;
   if(role === "manager"){
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（マネージャー）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（管理）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
     switchTab("dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
@@ -1245,7 +1245,7 @@ async function switchRole(){
     if(!currentGoogleUser?.email){ showRoleGate(); return; }
     const emailKey = currentGoogleUser.email.toLowerCase().replace(/\./g, ",");
     const snap = await fbDb.ref(`managerEmails/${emailKey}`).once("value");
-    if(!snap.exists()){ showToast("マネージャー権限がありません"); return; }
+    if(!snap.exists()){ showToast("管理権限がありません"); return; }
     saveRoleState("manager", null);
     applyRole("manager", null);
   }
@@ -1415,7 +1415,7 @@ async function addManagerEmail(){
 }
 
 async function removeManagerEmail(key){
-  if(!confirm("このアカウントのマネージャー権限を削除しますか？")) return;
+  if(!confirm("このアカウントの管理権限を削除しますか？")) return;
   await fbDb.ref(`managerEmails/${key}`).remove();
   showToast("削除しました");
   renderManagerAuth();
@@ -1540,7 +1540,7 @@ function isOverdue(task){
   return task.deadline < todayStr();
 }
 function projectProgress(projectId){
-  const ts = state.tasks.filter(t=>t.projectId===projectId);
+  const ts = state.tasks.filter(t=>t.projectId===projectId && t.status!=="取りやめ");
   if(ts.length===0) return 0;
   const done = ts.filter(t=>derivedTaskStatus(t)==="完了").length;
   return Math.round((done/ts.length)*100);
