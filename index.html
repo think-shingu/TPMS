@@ -1979,7 +1979,7 @@ function renderMembers(){
   el.innerHTML = `<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">` +
     state.members.map(m=>{
       const taskCount = state.tasks.filter(t=>getAssigneeIds(t).includes(m.id) && derivedTaskStatus(t)!=="完了" && t.status!=="取りやめ").length;
-      const projCount = state.projects.filter(p=>(p.memberIds||[]).includes(m.id)).length;
+      const projCount = state.projects.filter(p=>(p.memberIds||[]).includes(m.id) || p.createdBy === m.id).length;
       const initial = m.name ? m.name.charAt(0) : "?";
       return `
         <div class="card">
