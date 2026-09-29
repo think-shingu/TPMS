@@ -499,6 +499,16 @@
   .flow-legend .fl-line{width:22px;height:0;border-top:2px solid var(--ok);}
   .flow-legend .fl-line.dashed{border-top:2px dashed #94a3b8;}
   .flow-legend .fl-dot{width:9px;height:9px;border-radius:50%;}
+  /* Sticky notes */
+  .flow-note{position:absolute;background:#fef9c3;border:1px solid #fde047;border-radius:6px;padding:24px 8px 20px 8px;box-shadow:2px 3px 8px rgba(0,0,0,0.10);cursor:grab;user-select:none;box-sizing:border-box;overflow:hidden;}
+  .flow-note.dragging{opacity:0.85;cursor:grabbing;box-shadow:4px 6px 16px rgba(0,0,0,0.18);}
+  .flow-note.resizing{opacity:0.85;}
+  .flow-note textarea{position:absolute;inset:24px 8px 20px 8px;background:transparent;border:none;resize:none;font-size:12px;font-family:inherit;outline:none;pointer-events:none;overflow:auto;color:#1e293b;line-height:1.5;}
+  .flow-note.editing textarea{pointer-events:auto;cursor:text;}
+  .flow-note-del{position:absolute;top:3px;right:4px;background:none;border:none;cursor:pointer;font-size:13px;color:#94a3b8;padding:0;line-height:1;}
+  .flow-note-del:hover{color:#ef4444;}
+  .flow-note-resize{position:absolute;bottom:3px;right:4px;font-size:13px;color:#a3a37a;cursor:se-resize;padding:0;line-height:1;user-select:none;}
+  .flow-note-label{position:absolute;top:4px;left:7px;font-size:10px;color:#a3a37a;font-weight:600;letter-spacing:.03em;pointer-events:none;}
 
   /* Name input step */
   .name-step-row{display:flex;gap:8px;margin-bottom:14px;}
@@ -719,6 +729,7 @@
           <div class="flow-toolbar-handle" id="flowToolbarHandle" title="ドラッグして移動">⠿</div>
           <select id="flowProjectSelect" onchange="renderTaskFlow()"></select>
           <button class="btn small" onclick="openTaskModalFromFlow()" id="flowNewTaskBtn">＋ 新規タスク</button>
+          <button class="btn secondary small" onclick="addFlowNote()" id="flowNewNoteBtn">＋ メモ</button>
           <button class="btn secondary small" onclick="autoArrangeFlow()" id="flowAutoArrangeBtn">🧭 自動整列</button>
           <button class="btn secondary small" onclick="toggleFlowFullscreen()" id="flowFullscreenBtn">⛶ 全画面表示</button>
           <div class="flow-zoom-controls">
@@ -877,7 +888,8 @@
 let state = {
   members: [],
   projects: [],
-  tasks: []
+  tasks: [],
+  flowNotes: []
 };
 let currentRole = null;
 let currentMemberId = null;
@@ -1119,12 +1131,13 @@ function addDays(dateStr, days){
 
 /* ---------------- Persistence (Firestore) ---------------- */
 async function loadFromFirestore(){
-  const [members, projects, tasks] = await Promise.all([
-    fsGetAll("members"), fsGetAll("projects"), fsGetAll("tasks")
+  const [members, projects, tasks, flowNotes] = await Promise.all([
+    fsGetAll("members"), fsGetAll("projects"), fsGetAll("tasks"), fsGetAll("flowNotes")
   ]);
-  state.members = members;
-  state.projects = projects;
-  state.tasks    = tasks;
+  state.members   = members;
+  state.projects  = projects;
+  state.tasks     = tasks;
+  state.flowNotes = flowNotes;
 }
 
 
@@ -2321,6 +2334,8 @@ function redrawFlowEdges(){
 function renderTaskFlow(){
   const flowNewBtn = document.getElementById("flowNewTaskBtn");
   if(flowNewBtn) flowNewBtn.style.display = isReadOnly ? "none" : "";
+  const flowNewNoteBtn = document.getElementById("flowNewNoteBtn");
+  if(flowNewNoteBtn) flowNewNoteBtn.style.display = isReadOnly ? "none" : "";
   refreshFlowProjectSelect();
   const arrangeBtn = document.getElementById("flowAutoArrangeBtn");
   if(arrangeBtn) arrangeBtn.style.opacity = _isFlowEditable() ? "1" : "0.4";
@@ -2372,6 +2387,7 @@ function renderTaskFlow(){
   flowCurrentTasks = tasks;
   flowPositions = positions;
 
+  const notes = state.flowNotes.filter(n=>n.projectId===projectId);
   nodesEl.innerHTML = tasks.map(t=>{
     const pos = positions[t.id];
     return `
@@ -2384,6 +2400,19 @@ function renderTaskFlow(){
           <div class="ft-meta">📅 ${t.deadline || "未設定"} ・ ${escapeHtml(derivedTaskStatus(t))}</div>
         </div>
         <div class="flow-resize-handle" onmousedown="startNodeResize(event,'${t.id}')" title="ドラッグしてサイズ変更">⌟</div>
+      </div>
+    `;
+  }).join("") + notes.map(n=>{
+    const nw = n.w || 160, nh = n.h || 100;
+    const editable = !isReadOnly ? `onmousedown="startNoteDrag(event,'${n.id}')"` : "";
+    const delBtn = !isReadOnly ? `<button class="flow-note-del" onmousedown="event.stopPropagation()" onclick="deleteFlowNote('${n.id}')" title="削除">✕</button>` : "";
+    const resizeHandle = !isReadOnly ? `<div class="flow-note-resize" onmousedown="startNoteResize(event,'${n.id}')">⌟</div>` : "";
+    return `
+      <div class="flow-note" data-note-id="${n.id}" style="left:${n.x||40}px;top:${n.y||40}px;width:${nw}px;height:${nh}px;" ${editable} ondblclick="editFlowNote(event,'${n.id}')">
+        <span class="flow-note-label">メモ</span>
+        ${delBtn}
+        <textarea readonly>${escapeHtml(n.text||"")}</textarea>
+        ${resizeHandle}
       </div>
     `;
   }).join("");
@@ -2401,6 +2430,104 @@ function _isFlowEditable(){
   const project = state.projects.find(p=>p.id===projectId);
   return project && project.createdBy === currentMemberId;
 }
+
+/* ---- Sticky notes ---- */
+function addFlowNote(){
+  if(isReadOnly){ showToast("閲覧モードのため操作できません"); return; }
+  const projectId = document.getElementById("flowProjectSelect").value;
+  if(!projectId){ showToast("プロジェクトを選択してください"); return; }
+  const scroll = document.getElementById("flowScroll");
+  const cx = scroll ? (scroll.scrollLeft / flowZoom + 60) : 60;
+  const cy = scroll ? (scroll.scrollTop  / flowZoom + 60) : 60;
+  const note = { id: uid(), projectId, text: "", x: cx, y: cy, w: 160, h: 100 };
+  state.flowNotes.push(note);
+  fsSet("flowNotes", note.id, note);
+  renderTaskFlow();
+  // auto-open for editing
+  setTimeout(()=>{ const el = document.querySelector(`.flow-note[data-note-id="${note.id}"]`); if(el) startEditNote(el, note.id); }, 50);
+}
+
+function deleteFlowNote(noteId){
+  if(!confirm("このメモを削除しますか？")) return;
+  state.flowNotes = state.flowNotes.filter(n=>n.id!==noteId);
+  fsDel("flowNotes", noteId);
+  renderTaskFlow();
+}
+
+function editFlowNote(e, noteId){
+  if(isReadOnly) return;
+  e.stopPropagation();
+  const el = document.querySelector(`.flow-note[data-note-id="${noteId}"]`);
+  if(!el) return;
+  startEditNote(el, noteId);
+}
+
+function startEditNote(el, noteId){
+  if(el.classList.contains("editing")) return;
+  el.classList.add("editing");
+  const ta = el.querySelector("textarea");
+  if(!ta) return;
+  ta.removeAttribute("readonly");
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  function save(){
+    ta.setAttribute("readonly", "");
+    el.classList.remove("editing");
+    const note = state.flowNotes.find(n=>n.id===noteId);
+    if(note){ note.text = ta.value; fsSet("flowNotes", note.id, note); }
+    ta.removeEventListener("blur", save);
+  }
+  ta.addEventListener("blur", save);
+}
+
+function startNoteDrag(e, noteId){
+  if(isReadOnly) return;
+  if(e.button !== undefined && e.button !== 0) return;
+  const noteEl = document.querySelector(`.flow-note[data-note-id="${noteId}"]`);
+  if(noteEl && noteEl.classList.contains("editing")) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const canvas = document.getElementById("flowCanvas");
+  const note = state.flowNotes.find(n=>n.id===noteId);
+  if(!noteEl || !canvas || !note) return;
+  const canvasRect = canvas.getBoundingClientRect();
+  const clickX = (e.clientX - canvasRect.left) / flowZoom;
+  const clickY = (e.clientY - canvasRect.top) / flowZoom;
+  flowDrag = {
+    type: "note",
+    noteId,
+    offsetX: clickX - (note.x||0),
+    offsetY: clickY - (note.y||0),
+    startX: note.x||0,
+    startY: note.y||0,
+    moved: false
+  };
+  noteEl.classList.add("dragging");
+  document.addEventListener("mousemove", onFlowMouseMove);
+  document.addEventListener("mouseup", onFlowMouseUp);
+}
+
+function startNoteResize(e, noteId){
+  if(isReadOnly) return;
+  if(e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const note = state.flowNotes.find(n=>n.id===noteId);
+  if(!note) return;
+  flowDrag = {
+    type: "noteResize",
+    noteId,
+    startMouseX: e.clientX,
+    startMouseY: e.clientY,
+    startW: note.w||160,
+    startH: note.h||100
+  };
+  const noteEl = document.querySelector(`.flow-note[data-note-id="${noteId}"]`);
+  if(noteEl) noteEl.classList.add("resizing");
+  document.addEventListener("mousemove", onFlowMouseMove);
+  document.addEventListener("mouseup", onFlowMouseUp);
+}
+
 function autoArrangeFlow(){
   const projectId = document.getElementById("flowProjectSelect").value;
   if(!projectId) return;
@@ -2650,6 +2777,25 @@ function onFlowMouseMove(e){
       flowPositions[flowDrag.taskId].h = h;
     }
     redrawFlowEdges();
+  } else if(flowDrag.type === "note"){
+    let x = (e.clientX - canvasRect.left) / flowZoom - flowDrag.offsetX;
+    let y = (e.clientY - canvasRect.top) / flowZoom - flowDrag.offsetY;
+    x = Math.max(0, x);
+    y = Math.max(0, y);
+    if(Math.abs(x - flowDrag.startX) + Math.abs(y - flowDrag.startY) > 4) flowDrag.moved = true;
+    const noteEl = document.querySelector(`.flow-note[data-note-id="${flowDrag.noteId}"]`);
+    if(noteEl){ noteEl.style.left = x + "px"; noteEl.style.top = y + "px"; }
+    const note = state.flowNotes.find(n=>n.id===flowDrag.noteId);
+    if(note){ note.x = x; note.y = y; }
+  } else if(flowDrag.type === "noteResize"){
+    let w = flowDrag.startW + (e.clientX - flowDrag.startMouseX) / flowZoom;
+    let h = flowDrag.startH + (e.clientY - flowDrag.startMouseY) / flowZoom;
+    w = Math.min(FLOW_MAX_W, Math.max(120, w));
+    h = Math.min(FLOW_MAX_H, Math.max(80, h));
+    const noteEl = document.querySelector(`.flow-note[data-note-id="${flowDrag.noteId}"]`);
+    if(noteEl){ noteEl.style.width = w + "px"; noteEl.style.height = h + "px"; }
+    const note = state.flowNotes.find(n=>n.id===flowDrag.noteId);
+    if(note){ note.w = w; note.h = h; }
   }
 }
 
@@ -2690,6 +2836,15 @@ function onFlowMouseUp(e){
     }
     cleanupFlowDrag();
     renderTaskFlow();
+  } else if(flowDrag.type === "note"){
+    const note = state.flowNotes.find(n=>n.id===flowDrag.noteId);
+    const moved = flowDrag.moved;
+    cleanupFlowDrag();
+    if(moved && note) fsSet("flowNotes", note.id, note);
+  } else if(flowDrag.type === "noteResize"){
+    const note = state.flowNotes.find(n=>n.id===flowDrag.noteId);
+    cleanupFlowDrag();
+    if(note) fsSet("flowNotes", note.id, note);
   } else {
     cleanupFlowDrag();
   }
@@ -2698,7 +2853,7 @@ function onFlowMouseUp(e){
 function cleanupFlowDrag(){
   document.removeEventListener("mousemove", onFlowMouseMove);
   document.removeEventListener("mouseup", onFlowMouseUp);
-  document.querySelectorAll(".flow-node.dragging, .flow-node.resizing, .flow-node.connecting-from").forEach(el=>el.classList.remove("dragging","resizing","connecting-from"));
+  document.querySelectorAll(".flow-node.dragging, .flow-node.resizing, .flow-node.connecting-from, .flow-note.dragging, .flow-note.resizing").forEach(el=>el.classList.remove("dragging","resizing","connecting-from"));
   const tempLine = document.getElementById("flowTempLine");
   if(tempLine) tempLine.remove();
   flowDrag = null;
