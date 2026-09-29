@@ -1233,14 +1233,17 @@ function applyRole(role, memberId){
     : (currentGoogleUser ? currentGoogleUser.name : "");
   const avatarClickHtml = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button>`;
   const bellBtn = `<button id="notifBell" class="notif-bell-btn" onclick="toggleNotifBell()" title="プッシュ通知設定">${notifPermission ? "🔔" : "🔕"}</button>`;
+  const savedTab = (() => { try{ return localStorage.getItem("tpms_tab"); }catch(e){ return null; } })();
   if(role === "manager"){
     badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（管理）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
-    switchTab("dashboard");
+    const managerTabs = ["dashboard","projects","tasks","taskflow","calendar","members","memo","managerAuth"];
+    switchTab(savedTab && managerTabs.includes(savedTab) ? savedTab : "dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
     const displayName = m ? m.name : (currentGoogleUser ? currentGoogleUser.name : "ゲスト");
     badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん${bellBtn} <button onclick="memberSwitchRole()">切り替え</button>`;
-    switchTab("myTasks");
+    const memberTabs = ["myTasks","projects","taskflow","memo","memberCalendar"];
+    switchTab(savedTab && memberTabs.includes(savedTab) ? savedTab : "myTasks");
   }
   if(currentGoogleUser?.email) osLogin(currentGoogleUser.email);
 }
@@ -1317,6 +1320,7 @@ function switchTab(tab){
   if(tab==="calendar")       renderCalView("managerCalContainer", state.tasks);
   if(tab==="memberCalendar") renderCalView("memberCalContainer",  memberCalTasks());
   if(tab==="memo")           loadMemo();
+  try{ localStorage.setItem("tpms_tab", tab); }catch(e){}
 }
 
 /* ---------------- Calendar ---------------- */
