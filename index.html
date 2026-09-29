@@ -686,9 +686,9 @@
   <section id="tasks" class="section manager-only">
     <div class="toolbar">
       <div class="filters">
-        <select id="taskProjectFilter" onchange="renderTasks()"><option value="">全プロジェクト</option></select>
-        <select id="taskAssigneeFilter" onchange="renderTasks()"><option value="">全担当者</option></select>
-        <select id="taskStatusFilter" onchange="renderTasks()">
+        <select id="taskProjectFilter" onchange="_saveUiState();renderTasks()"><option value="">全プロジェクト</option></select>
+        <select id="taskAssigneeFilter" onchange="_saveUiState();renderTasks()"><option value="">全担当者</option></select>
+        <select id="taskStatusFilter" onchange="_saveUiState();renderTasks()">
           <option value="">全ステータス</option>
           <option value="未完了">未完了</option>
           <option value="完了">完了</option>
@@ -727,7 +727,7 @@
       <div class="flow-wrap" id="flowWrap">
         <div class="flow-toolbar-float" id="flowToolbarFloat">
           <div class="flow-toolbar-handle" id="flowToolbarHandle" title="ドラッグして移動">⠿</div>
-          <select id="flowProjectSelect" onchange="renderTaskFlow()"></select>
+          <select id="flowProjectSelect" onchange="_saveUiState();renderTaskFlow()"></select>
           <button class="btn small" onclick="openTaskModalFromFlow()" id="flowNewTaskBtn">＋ 新規タスク</button>
           <button class="btn secondary small" onclick="addFlowNote()" id="flowNewNoteBtn">＋ メモ</button>
           <button class="btn secondary small" onclick="autoArrangeFlow()" id="flowAutoArrangeBtn">🧭 自動整列</button>
@@ -1234,6 +1234,7 @@ function applyRole(role, memberId){
   const avatarClickHtml = `<button class="avatar-btn" onclick="returnToSignIn()" title="サインイン画面に戻る">${avatarHtml}</button>`;
   const bellBtn = `<button id="notifBell" class="notif-bell-btn" onclick="toggleNotifBell()" title="プッシュ通知設定">${notifPermission ? "🔔" : "🔕"}</button>`;
   const savedTab = (() => { try{ return localStorage.getItem("tpms_tab"); }catch(e){ return null; } })();
+  const ui = _loadUiState();
   if(role === "manager"){
     badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（管理）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
     const managerTabs = ["dashboard","projects","tasks","taskflow","calendar","members","memo","managerAuth"];
@@ -1245,6 +1246,14 @@ function applyRole(role, memberId){
     const memberTabs = ["myTasks","projects","taskflow","memo","memberCalendar"];
     switchTab(savedTab && memberTabs.includes(savedTab) ? savedTab : "myTasks");
   }
+  // restore in-page UI state
+  if(ui.calYear)  calYear  = ui.calYear;
+  if(ui.calMonth !== undefined) calMonth = ui.calMonth;
+  if(ui.myTaskFilter){ myTaskFilter = ui.myTaskFilter; document.querySelectorAll("[data-mytab]").forEach(b=>b.classList.toggle("active", b.dataset.mytab===ui.myTaskFilter)); }
+  if(ui.taskProjFilter !== undefined){ const el = document.getElementById("taskProjectFilter"); if(el) el.value = ui.taskProjFilter; }
+  if(ui.taskAssFilter !== undefined){ const el = document.getElementById("taskAssigneeFilter"); if(el) el.value = ui.taskAssFilter; }
+  if(ui.taskStatusFilter !== undefined){ const el = document.getElementById("taskStatusFilter"); if(el) el.value = ui.taskStatusFilter; }
+  if(ui.flowProject !== undefined){ const el = document.getElementById("flowProjectSelect"); if(el){ el.value = ui.flowProject; renderTaskFlow(); } }
   if(currentGoogleUser?.email) osLogin(currentGoogleUser.email);
 }
 
@@ -1327,8 +1336,11 @@ function switchTab(tab){
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
-function calPrevMonth(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendars(); }
-function calNextMonth(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendars(); }
+function _saveUiState(){ try{ localStorage.setItem("tpms_ui", JSON.stringify({ calYear, calMonth, myTaskFilter, taskProjFilter: document.getElementById("taskProjectFilter")?.value||"", taskAssFilter: document.getElementById("taskAssigneeFilter")?.value||"", taskStatusFilter: document.getElementById("taskStatusFilter")?.value||"", flowProject: document.getElementById("flowProjectSelect")?.value||"" })); }catch(e){} }
+function _loadUiState(){ try{ return JSON.parse(localStorage.getItem("tpms_ui")||"{}"); }catch(e){ return {}; } }
+
+function calPrevMonth(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} _saveUiState(); renderCalendars(); }
+function calNextMonth(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} _saveUiState(); renderCalendars(); }
 function renderCalendars(){
   if(document.getElementById("managerCalContainer"))  renderCalView("managerCalContainer", state.tasks);
   if(document.getElementById("memberCalContainer"))   renderCalView("memberCalContainer",  memberCalTasks());
@@ -2073,6 +2085,7 @@ async function _ensureMemberRecord(googleUser, userName){
 function switchMyTab(tab){
   myTaskFilter = tab;
   document.querySelectorAll("[data-mytab]").forEach(b=>b.classList.toggle("active", b.dataset.mytab===tab));
+  _saveUiState();
   renderMyTasks();
 }
 
