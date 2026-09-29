@@ -827,8 +827,8 @@
 </div>
 
 <!-- TASK MODAL -->
-<div class="modal-overlay" id="taskModalOverlay">
-  <div class="modal">
+<div class="modal-overlay" id="taskModalOverlay" onclick="closeModal('taskModalOverlay')">
+  <div class="modal" onclick="event.stopPropagation()">
     <h3 id="taskModalTitle">新規タスク</h3>
     <input type="hidden" id="taskId">
     <div class="form-row"><label>タスク名</label><input type="text" id="taskTitle" autocomplete="off"></div>
