@@ -817,7 +817,7 @@
     <div class="form-row"><label>開始日</label><input type="date" id="projectStart"></div>
     <div class="form-row"><label>締切日</label><input type="date" id="projectEnd"></div>
     <div class="form-row"><label>作成者</label><select id="projectCreator"><option value="">-</option></select></div>
-    <div class="form-row"><label>参加メンバー</label><select id="projectMembers" multiple size="4"></select></div>
+    <div class="form-row"><label>参加メンバー</label><div id="projectMembers" style="max-height:140px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:6px;display:flex;flex-wrap:wrap;gap:6px;"></div></div>
     <div class="modal-actions">
       <button class="btn danger" id="projectDeleteBtn" onclick="deleteProject()" style="display:none;">削除</button>
       <button class="btn secondary" onclick="closeModal('projectModalOverlay')">キャンセル</button>
@@ -1653,7 +1653,7 @@ function renderProjects(){
 
 function refreshProjectSelects(){
   const memSel = document.getElementById("projectMembers");
-  memSel.innerHTML = state.members.map(m=>`<option value="${m.id}">${escapeHtml(m.name)}</option>`).join("");
+  memSel.innerHTML = state.members.map(m=>`<label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;"><input type="checkbox" class="proj-member-check" value="${m.id}"> ${escapeHtml(m.name)}</label>`).join("");
 
   const creatorSel = document.getElementById("projectCreator");
   const prevCreator = creatorSel.value;
@@ -1701,8 +1701,8 @@ function openProjectModal(id){
     document.getElementById("projectStart").value = p.start||"";
     document.getElementById("projectEnd").value = p.end||"";
     creatorSel.value = p.createdBy||"";
-    Array.from(document.getElementById("projectMembers").options).forEach(o=>{
-      o.selected = (p.memberIds||[]).includes(o.value);
+    document.querySelectorAll("#projectMembers .proj-member-check").forEach(cb=>{
+      cb.checked = (p.memberIds||[]).includes(cb.value);
     });
   }else{
     document.getElementById("projectModalTitle").textContent = "新規プロジェクト";
@@ -1711,7 +1711,7 @@ function openProjectModal(id){
     document.getElementById("projectStart").value = "";
     document.getElementById("projectEnd").value = "";
     creatorSel.value = currentRole === "member" ? currentMemberId : "";
-    Array.from(document.getElementById("projectMembers").options).forEach(o=>o.selected=false);
+    document.querySelectorAll("#projectMembers .proj-member-check").forEach(cb=>cb.checked=false);
   }
   creatorSel.disabled = currentRole === "member";
   document.getElementById("projectModalOverlay").classList.add("active");
@@ -1721,7 +1721,7 @@ function saveProject(){
   const name = document.getElementById("projectName").value.trim();
   if(!name){ alert("プロジェクト名を入力してください"); return; }
   const id = document.getElementById("projectId").value;
-  const memberIds = Array.from(document.getElementById("projectMembers").selectedOptions).map(o=>o.value);
+  const memberIds = Array.from(document.querySelectorAll("#projectMembers .proj-member-check:checked")).map(cb=>cb.value);
   const data = {
     name,
     description: document.getElementById("projectDesc").value.trim(),
