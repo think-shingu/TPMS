@@ -1253,7 +1253,7 @@ function applyRole(role, memberId){
   if(ui.taskProjFilter !== undefined){ const el = document.getElementById("taskProjectFilter"); if(el) el.value = ui.taskProjFilter; }
   if(ui.taskAssFilter !== undefined){ const el = document.getElementById("taskAssigneeFilter"); if(el) el.value = ui.taskAssFilter; }
   if(ui.taskStatusFilter !== undefined){ const el = document.getElementById("taskStatusFilter"); if(el) el.value = ui.taskStatusFilter; }
-  if(ui.flowProject !== undefined){ const el = document.getElementById("flowProjectSelect"); if(el){ el.value = ui.flowProject; renderTaskFlow(); } }
+  if(ui.flowProject !== undefined){ const el = document.getElementById("flowProjectSelect"); if(el) el.value = ui.flowProject; }
   if(currentGoogleUser?.email) osLogin(currentGoogleUser.email);
 }
 
@@ -1336,7 +1336,24 @@ function switchTab(tab){
 let calYear  = new Date().getFullYear();
 let calMonth = new Date().getMonth();
 
-function _saveUiState(){ try{ localStorage.setItem("tpms_ui", JSON.stringify({ calYear, calMonth, myTaskFilter, taskProjFilter: document.getElementById("taskProjectFilter")?.value||"", taskAssFilter: document.getElementById("taskAssigneeFilter")?.value||"", taskStatusFilter: document.getElementById("taskStatusFilter")?.value||"", flowProject: document.getElementById("flowProjectSelect")?.value||"" })); }catch(e){} }
+function _saveUiState(){
+  try{
+    const scroll = document.getElementById("flowScroll");
+    const toolbar = document.getElementById("flowToolbarFloat");
+    localStorage.setItem("tpms_ui", JSON.stringify({
+      calYear, calMonth, myTaskFilter,
+      taskProjFilter:    document.getElementById("taskProjectFilter")?.value||"",
+      taskAssFilter:     document.getElementById("taskAssigneeFilter")?.value||"",
+      taskStatusFilter:  document.getElementById("taskStatusFilter")?.value||"",
+      flowProject:       document.getElementById("flowProjectSelect")?.value||"",
+      flowZoom,
+      flowScrollLeft:    scroll  ? scroll.scrollLeft  : 0,
+      flowScrollTop:     scroll  ? scroll.scrollTop   : 0,
+      flowToolbarLeft:   toolbar ? toolbar.style.left  : "",
+      flowToolbarTop:    toolbar ? toolbar.style.top   : ""
+    }));
+  }catch(e){}
+}
 function _loadUiState(){ try{ return JSON.parse(localStorage.getItem("tpms_ui")||"{}"); }catch(e){ return {}; } }
 
 function calPrevMonth(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} _saveUiState(); renderCalendars(); }
@@ -2438,7 +2455,22 @@ function renderTaskFlow(){
   svg.setAttribute("height", canvasHeight);
   svg.innerHTML = buildFlowEdgesSvg(tasks, positions);
 
+  // restore zoom/scroll/toolbar from saved state
+  const _ui = _loadUiState();
+  if(_ui.flowZoom) { flowZoom = _ui.flowZoom; }
   applyFlowZoom();
+  requestAnimationFrame(()=>{
+    const sc = document.getElementById("flowScroll");
+    if(sc){
+      if(_ui.flowScrollLeft !== undefined) sc.scrollLeft = _ui.flowScrollLeft;
+      if(_ui.flowScrollTop  !== undefined) sc.scrollTop  = _ui.flowScrollTop;
+    }
+    const tb = document.getElementById("flowToolbarFloat");
+    if(tb){
+      if(_ui.flowToolbarLeft) tb.style.left = _ui.flowToolbarLeft;
+      if(_ui.flowToolbarTop)  tb.style.top  = _ui.flowToolbarTop;
+    }
+  });
 }
 
 function _isFlowEditable(){
@@ -2599,6 +2631,7 @@ function _onTbUp(){
   _tbDrag = null;
   document.removeEventListener("mousemove", _onTbMove);
   document.removeEventListener("mouseup",   _onTbUp);
+  _saveUiState();
 }
 
 /* ---- Task flow drag interactions (move nodes / draw connections) ---- */
@@ -2645,15 +2678,16 @@ function setFlowZoom(z, anchorClientX, anchorClientY){
   }
 }
 
-function flowZoomIn(){ setFlowZoom(flowZoom + FLOW_ZOOM_STEP); }
-function flowZoomOut(){ setFlowZoom(flowZoom - FLOW_ZOOM_STEP); }
-function flowZoomReset(){ setFlowZoom(1); }
+function flowZoomIn(){ setFlowZoom(flowZoom + FLOW_ZOOM_STEP); _saveUiState(); }
+function flowZoomOut(){ setFlowZoom(flowZoom - FLOW_ZOOM_STEP); _saveUiState(); }
+function flowZoomReset(){ setFlowZoom(1); _saveUiState(); }
 
 function handleFlowWheelZoom(e){
   if(!e.ctrlKey && !e.metaKey) return;
   e.preventDefault();
   const delta = e.deltaY < 0 ? FLOW_ZOOM_STEP : -FLOW_ZOOM_STEP;
   setFlowZoom(flowZoom + delta, e.clientX, e.clientY);
+  _saveUiState();
 }
 
 function toggleFlowFullscreen(){
@@ -2971,6 +3005,7 @@ window.addEventListener("DOMContentLoaded", ()=>{
   document.addEventListener("keydown", handleFlowEscKey);
   const flowScrollEl = document.getElementById("flowScroll");
   if(flowScrollEl) flowScrollEl.addEventListener("wheel", handleFlowWheelZoom, { passive: false });
+  if(flowScrollEl) flowScrollEl.addEventListener("scroll", ()=>_saveUiState(), { passive: true });
 
   // Firebase 初期化
   const app = firebase.initializeApp(FIREBASE_CONFIG);
