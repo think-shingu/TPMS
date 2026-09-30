@@ -1235,6 +1235,13 @@ function applyRole(role, memberId){
   const bellBtn = `<button id="notifBell" class="notif-bell-btn" onclick="toggleNotifBell()" title="プッシュ通知設定">${notifPermission ? "🔔" : "🔕"}</button>`;
   const savedTab = (() => { try{ return localStorage.getItem("tpms_tab"); }catch(e){ return null; } })();
   const ui = _loadUiState();
+  // restore values that must be set BEFORE switchTab triggers renders
+  if(ui.calYear)  calYear  = ui.calYear;
+  if(ui.calMonth !== undefined) calMonth = ui.calMonth;
+  if(ui.myTaskFilter){ myTaskFilter = ui.myTaskFilter; document.querySelectorAll("[data-mytab]").forEach(b=>b.classList.toggle("active", b.dataset.mytab===ui.myTaskFilter)); }
+  if(ui.taskProjFilter !== undefined){ const el = document.getElementById("taskProjectFilter"); if(el) el.value = ui.taskProjFilter; }
+  if(ui.taskAssFilter !== undefined){ const el = document.getElementById("taskAssigneeFilter"); if(el) el.value = ui.taskAssFilter; }
+  if(ui.taskStatusFilter !== undefined){ const el = document.getElementById("taskStatusFilter"); if(el) el.value = ui.taskStatusFilter; }
   if(role === "manager"){
     badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（管理）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
     const managerTabs = ["dashboard","projects","tasks","taskflow","calendar","members","memo","managerAuth"];
@@ -1246,14 +1253,6 @@ function applyRole(role, memberId){
     const memberTabs = ["myTasks","projects","taskflow","memo","memberCalendar"];
     switchTab(savedTab && memberTabs.includes(savedTab) ? savedTab : "myTasks");
   }
-  // restore in-page UI state
-  if(ui.calYear)  calYear  = ui.calYear;
-  if(ui.calMonth !== undefined) calMonth = ui.calMonth;
-  if(ui.myTaskFilter){ myTaskFilter = ui.myTaskFilter; document.querySelectorAll("[data-mytab]").forEach(b=>b.classList.toggle("active", b.dataset.mytab===ui.myTaskFilter)); }
-  if(ui.taskProjFilter !== undefined){ const el = document.getElementById("taskProjectFilter"); if(el) el.value = ui.taskProjFilter; }
-  if(ui.taskAssFilter !== undefined){ const el = document.getElementById("taskAssigneeFilter"); if(el) el.value = ui.taskAssFilter; }
-  if(ui.taskStatusFilter !== undefined){ const el = document.getElementById("taskStatusFilter"); if(el) el.value = ui.taskStatusFilter; }
-  if(ui.flowProject !== undefined){ const el = document.getElementById("flowProjectSelect"); if(el) el.value = ui.flowProject; }
   if(currentGoogleUser?.email) osLogin(currentGoogleUser.email);
 }
 
@@ -2215,7 +2214,9 @@ function refreshFlowProjectSelect(){
     return;
   }
   sel.innerHTML = projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
-  if(projects.some(p=>p.id===prevVal)) sel.value = prevVal;
+  const savedProject = _loadUiState().flowProject;
+  if(prevVal && projects.some(p=>p.id===prevVal)) sel.value = prevVal;
+  else if(savedProject && projects.some(p=>p.id===savedProject)) sel.value = savedProject;
 }
 
 function statusFlowClass(t){
