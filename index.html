@@ -1328,6 +1328,7 @@ function switchTab(tab){
   if(tab==="calendar")       renderCalView("managerCalContainer", state.tasks);
   if(tab==="memberCalendar") renderCalView("memberCalContainer",  memberCalTasks());
   if(tab==="memo")           loadMemo();
+  else                       detachMemoListener();
   try{ localStorage.setItem("tpms_tab", tab); }catch(e){}
 }
 
@@ -1959,16 +1960,38 @@ function deleteTask(){
 /* ---------------- Render: Members ---------------- */
 /* ---------------- Memo ---------------- */
 let _memoTimer = null;
+let _memoListener = null;
 
-async function loadMemo(){
+function _memoRef(){
+  return currentRole === "manager"
+    ? fbDb.ref("sharedMemo")
+    : fbDb.ref(`users/${currentGoogleUser.uid}/memo`);
+}
+
+function detachMemoListener(){
+  if(_memoListener){ fbDb.ref("sharedMemo").off("value", _memoListener); _memoListener = null; }
+}
+
+function loadMemo(){
   if(!currentGoogleUser?.uid || !fbDb) return;
-  try{
-    const snap = await fbDb.ref(`users/${currentGoogleUser.uid}/memo`).once("value");
-    const el = document.getElementById("memoContent");
-    if(el) el.value = snap.val() || "";
-    const st = document.getElementById("memoSaveStatus");
-    if(st) st.textContent = "保存済み";
-  }catch(e){ console.warn("memo load failed", e); }
+  detachMemoListener();
+  if(currentRole === "manager"){
+    _memoListener = fbDb.ref("sharedMemo").on("value", snap => {
+      const el = document.getElementById("memoContent");
+      if(!el) return;
+      if(document.activeElement === el) return; // 編集中は上書きしない
+      el.value = snap.val() || "";
+      const st = document.getElementById("memoSaveStatus");
+      if(st) st.textContent = "保存済み";
+    });
+  } else {
+    fbDb.ref(`users/${currentGoogleUser.uid}/memo`).once("value").then(snap => {
+      const el = document.getElementById("memoContent");
+      if(el) el.value = snap.val() || "";
+      const st = document.getElementById("memoSaveStatus");
+      if(st) st.textContent = "保存済み";
+    }).catch(e => console.warn("memo load failed", e));
+  }
 }
 
 function onMemoInput(){
@@ -1976,10 +1999,11 @@ function onMemoInput(){
   if(st) st.textContent = "編集中...";
   clearTimeout(_memoTimer);
   _memoTimer = setTimeout(async ()=>{
+    _memoTimer = null;
     if(!currentGoogleUser?.uid || !fbDb) return;
     const content = document.getElementById("memoContent")?.value || "";
     try{
-      await fbDb.ref(`users/${currentGoogleUser.uid}/memo`).set(content);
+      await _memoRef().set(content);
       const s = document.getElementById("memoSaveStatus");
       if(s) s.textContent = "保存済み";
     }catch(e){ console.warn("memo save failed", e); }
