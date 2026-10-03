@@ -1832,6 +1832,9 @@ function renderTasks(){
 
 function openTaskModal(id){
   if(isReadOnly){ showToast("閲覧モードのため編集できません"); return; }
+  // 全画面中はモーダルを開く前に全画面を終了する
+  const flowWrap = document.getElementById("flowWrap");
+  if(flowWrap && flowWrap.classList.contains("fullscreen")) toggleFlowFullscreen();
   refreshProjectSelects();
   refreshMemberSelects();
   document.getElementById("taskAssigneeLockNote").style.display = "none";
@@ -2723,8 +2726,9 @@ function toggleFlowFullscreen(){
   document.body.classList.toggle("flow-fullscreen-active", isFull);
   if(btn) btn.textContent = isFull ? "✕ 全画面終了" : "⛶ 全画面表示";
   if(!isFull){
-    // 全画面終了時に開いているモーダルを閉じる
-    document.querySelectorAll(".modal-overlay.active").forEach(el => el.classList.remove("active"));
+    // 全画面終了時にツールバー位置をリセット（fullscreen中の座標が引き継がれて画面外に出るのを防ぐ）
+    const tb = document.getElementById("flowToolbarFloat");
+    if(tb){ tb.style.left = "12px"; tb.style.top = "12px"; }
   }
 }
 
