@@ -164,7 +164,7 @@
     position:fixed;inset:0;
     background:rgba(15,23,42,.5);
     align-items:center;justify-content:center;
-    z-index:100;
+    z-index:600;
     padding:20px;
   }
   .modal-overlay.active{display:flex;}
@@ -2722,6 +2722,10 @@ function toggleFlowFullscreen(){
   const isFull = wrap.classList.toggle("fullscreen");
   document.body.classList.toggle("flow-fullscreen-active", isFull);
   if(btn) btn.textContent = isFull ? "✕ 全画面終了" : "⛶ 全画面表示";
+  if(!isFull){
+    // 全画面終了時に開いているモーダルを閉じる
+    document.querySelectorAll(".modal-overlay.active").forEach(el => el.classList.remove("active"));
+  }
 }
 
 function handleFlowEscKey(e){
