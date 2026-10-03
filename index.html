@@ -164,7 +164,7 @@
     position:fixed;inset:0;
     background:rgba(15,23,42,.5);
     align-items:center;justify-content:center;
-    z-index:600;
+    z-index:1000;
     padding:20px;
   }
   .modal-overlay.active{display:flex;}
@@ -335,7 +335,7 @@
     border-radius:0;
     border:none;
   }
-  body.flow-fullscreen-active{overflow:hidden;}
+  body.flow-fullscreen-active .flow-wrap.fullscreen{overflow:hidden;}
 
   .flow-scroll{
     position:absolute;
@@ -1833,9 +1833,6 @@ function renderTasks(){
 
 function openTaskModal(id){
   if(isReadOnly){ showToast("閲覧モードのため編集できません"); return; }
-  // 全画面中はモーダルを開く前に全画面を終了する
-  const flowWrap = document.getElementById("flowWrap");
-  if(flowWrap && flowWrap.classList.contains("fullscreen")) toggleFlowFullscreen();
   refreshProjectSelects();
   refreshMemberSelects();
   document.getElementById("taskAssigneeLockNote").style.display = "none";
