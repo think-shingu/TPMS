@@ -1039,6 +1039,8 @@ async function signInWithGoogle(){
 async function signOutGoogle(){
   try{ await fbAuth.signOut(); }catch(e){ console.warn(e); }
   try{ localStorage.removeItem(ROLE_KEY); }catch(e){ console.warn(e); }
+  try{ localStorage.removeItem("tpms_ui"); }catch(e){ console.warn(e); }
+  try{ localStorage.removeItem("tpms_tab"); }catch(e){ console.warn(e); }
   currentGoogleUser = null;
   currentUserName   = null;
   currentRole = null;
@@ -1349,9 +1351,7 @@ function _saveUiState(){
       flowProject:       document.getElementById("flowProjectSelect")?.value||"",
       flowZoom,
       flowScrollLeft:    scroll  ? scroll.scrollLeft  : 0,
-      flowScrollTop:     scroll  ? scroll.scrollTop   : 0,
-      flowToolbarLeft:   toolbar ? toolbar.style.left  : "",
-      flowToolbarTop:    toolbar ? toolbar.style.top   : ""
+      flowScrollTop:     scroll  ? scroll.scrollTop   : 0
     }));
   }catch(e){}
 }
@@ -2495,10 +2495,7 @@ function renderTaskFlow(){
       if(_ui.flowScrollTop  !== undefined) sc.scrollTop  = _ui.flowScrollTop;
     }
     const tb = document.getElementById("flowToolbarFloat");
-    if(tb){
-      if(_ui.flowToolbarLeft) tb.style.left = _ui.flowToolbarLeft;
-      if(_ui.flowToolbarTop)  tb.style.top  = _ui.flowToolbarTop;
-    }
+    if(tb){ tb.style.left = "12px"; tb.style.top = "12px"; }
   });
 }
 
@@ -2660,7 +2657,6 @@ function _onTbUp(){
   _tbDrag = null;
   document.removeEventListener("mousemove", _onTbMove);
   document.removeEventListener("mouseup",   _onTbUp);
-  _saveUiState();
 }
 
 /* ---- Task flow drag interactions (move nodes / draw connections) ---- */
