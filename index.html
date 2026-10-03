@@ -1242,14 +1242,15 @@ function applyRole(role, memberId){
   if(ui.taskProjFilter !== undefined){ const el = document.getElementById("taskProjectFilter"); if(el) el.value = ui.taskProjFilter; }
   if(ui.taskAssFilter !== undefined){ const el = document.getElementById("taskAssigneeFilter"); if(el) el.value = ui.taskAssFilter; }
   if(ui.taskStatusFilter !== undefined){ const el = document.getElementById("taskStatusFilter"); if(el) el.value = ui.taskStatusFilter; }
+  const logoutBtn = `<button onclick="returnToSignIn()" title="ログアウト" style="opacity:.7;">⏻</button>`;
   if(role === "manager"){
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（管理）${bellBtn} <button onclick="switchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(storedName)}（管理）${bellBtn} <button onclick="switchRole()">切り替え</button>${logoutBtn}`;
     const managerTabs = ["dashboard","projects","tasks","taskflow","calendar","members","memo","managerAuth"];
     switchTab(savedTab && managerTabs.includes(savedTab) ? savedTab : "dashboard");
   }else{
     const m = state.members.find(x=>x.id===memberId);
     const displayName = m ? m.name : (currentGoogleUser ? currentGoogleUser.name : "ゲスト");
-    badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん${bellBtn} <button onclick="memberSwitchRole()">切り替え</button>`;
+    badge.innerHTML = `${avatarClickHtml}${escapeHtml(displayName)}さん${bellBtn} <button onclick="memberSwitchRole()">切り替え</button>${logoutBtn}`;
     const memberTabs = ["myTasks","projects","taskflow","memo","memberCalendar"];
     switchTab(savedTab && memberTabs.includes(savedTab) ? savedTab : "myTasks");
   }
@@ -1284,7 +1285,7 @@ function memberSwitchRole(){
 }
 
 function returnToSignIn(){
-  if(!confirm("サインイン画面に戻りますか？")) return;
+  if(!confirm("ログアウトしますか？")) return;
   isReadOnly = false;
   document.body.removeAttribute("data-readonly");
   signOutGoogle();
